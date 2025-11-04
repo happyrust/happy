@@ -1,5 +1,4 @@
 import { Stack } from 'expo-router';
-import 'react-native-reanimated';
 import * as React from 'react';
 import { Typography } from '@/constants/Typography';
 import { createHeader } from '@/components/navigation/Header';
@@ -115,6 +114,12 @@ export default function RootLayout() {
                 name="settings/features"
                 options={{
                     headerTitle: t('settings.features'),
+                }}
+            />
+            <Stack.Screen
+                name="settings/autoMode"
+                options={{
+                    headerTitle: 'Auto Mode',
                 }}
             />
             <Stack.Screen
