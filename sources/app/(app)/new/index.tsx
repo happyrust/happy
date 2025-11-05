@@ -238,18 +238,20 @@ function NewSessionScreen() {
     //
 
     const [permissionMode, setPermissionMode] = React.useState<PermissionMode>(() => {
-        // Initialize with last used permission mode if valid, otherwise default to 'yolo' for Codex, 'default' for Claude
+        // For Codex, always default to 'yolo' unless user explicitly changes it in the current session
+        // For Claude, preserve last used permission mode if valid, otherwise default to 'default'
         const validClaudeModes: PermissionMode[] = ['default', 'acceptEdits', 'plan', 'bypassPermissions'];
-        const validCodexModes: PermissionMode[] = ['default', 'read-only', 'safe-yolo', 'yolo'];
 
-        if (lastUsedPermissionMode) {
-            if (agentType === 'codex' && validCodexModes.includes(lastUsedPermissionMode as PermissionMode)) {
-                return lastUsedPermissionMode as PermissionMode;
-            } else if (agentType === 'claude' && validClaudeModes.includes(lastUsedPermissionMode as PermissionMode)) {
+        if (agentType === 'codex') {
+            // Always default to 'yolo' for Codex, ignore lastUsedPermissionMode
+            return 'yolo';
+        } else {
+            // For Claude, preserve last used mode if valid
+            if (lastUsedPermissionMode && validClaudeModes.includes(lastUsedPermissionMode as PermissionMode)) {
                 return lastUsedPermissionMode as PermissionMode;
             }
+            return 'default';
         }
-        return agentType === 'codex' ? 'yolo' : 'default';
     });
 
     const [modelMode, setModelMode] = React.useState<ModelMode>(() => {
