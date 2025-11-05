@@ -22,6 +22,7 @@ import { useSetting } from '@/sync/storage';
 import { Theme } from '@/theme';
 import { t } from '@/text';
 import { Metadata } from '@/sync/storageTypes';
+import { Switch } from './Switch';
 
 interface AgentInputProps {
     value: string;
@@ -65,6 +66,8 @@ interface AgentInputProps {
     isSendDisabled?: boolean;
     isSending?: boolean;
     minHeight?: number;
+    autoModeEnabled?: boolean;
+    onAutoModeChange?: (enabled: boolean) => void;
 }
 
 const MAX_CONTEXT_SIZE = 190000;
@@ -681,6 +684,62 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                         );
                                     })}
                                 </View>
+
+                                {/* Auto Mode Section - only show if callback is provided */}
+                                {props.onAutoModeChange && (
+                                    <>
+                                        {/* Divider */}
+                                        <View style={{
+                                            height: 1,
+                                            backgroundColor: theme.colors.divider,
+                                            marginHorizontal: 16
+                                        }} />
+
+                                        <View style={{ paddingVertical: 8 }}>
+                                            <Text style={{
+                                                fontSize: 12,
+                                                fontWeight: '600',
+                                                color: theme.colors.textSecondary,
+                                                paddingHorizontal: 16,
+                                                paddingBottom: 4,
+                                                ...Typography.default('semiBold')
+                                            }}>
+                                                {t('sessionInfo.autoMode')}
+                                            </Text>
+                                            <Pressable
+                                                onPress={() => {
+                                                    hapticsLight();
+                                                    props.onAutoModeChange?.(!props.autoModeEnabled);
+                                                }}
+                                                style={({ pressed }) => ({
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                    paddingHorizontal: 16,
+                                                    paddingVertical: 8,
+                                                    backgroundColor: pressed ? theme.colors.surfacePressed : 'transparent'
+                                                })}
+                                            >
+                                                <View style={{ flex: 1, marginRight: 12 }}>
+                                                    <Text style={{
+                                                        fontSize: 14,
+                                                        color: theme.colors.text,
+                                                        ...Typography.default()
+                                                    }}>
+                                                        {t('sessionInfo.autoModeDescription')}
+                                                    </Text>
+                                                </View>
+                                                <Switch
+                                                    value={props.autoModeEnabled ?? false}
+                                                    onValueChange={(value) => {
+                                                        hapticsLight();
+                                                        props.onAutoModeChange?.(value);
+                                                    }}
+                                                />
+                                            </Pressable>
+                                        </View>
+                                    </>
+                                )}
                             </FloatingOverlay>
                         </View>
                     </>

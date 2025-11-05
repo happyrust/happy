@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Platform, Pressable, useWindowDimensions } from 'react-native';
 import { Typography } from '@/constants/Typography';
-import { useAllMachines, storage, useSetting, useLocalSettingMutable } from '@/sync/storage';
+import { useAllMachines, storage, useSetting, useLocalSetting } from '@/sync/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUnistyles } from 'react-native-unistyles';
@@ -21,7 +21,7 @@ import { createWorktree } from '@/utils/createWorktree';
 import { getTempData, type NewSessionData } from '@/utils/tempDataStore';
 import { linkTaskToSession } from '@/-zen/model/taskSessionLink';
 import { PermissionMode, ModelMode } from '@/components/PermissionModeSelector';
-import { Switch } from '@/components/Switch';
+import { toggleAutoModeForSession } from '@/utils/autoModeUtils';
 
 // Simple temporary state for passing selections back from picker screens
 let onMachineSelected: (machineId: string) => void = () => { };
@@ -118,7 +118,10 @@ function NewSessionScreen() {
     const lastUsedPermissionMode = useSetting('lastUsedPermissionMode');
     const lastUsedModelMode = useSetting('lastUsedModelMode');
     const experimentsEnabled = useSetting('experiments');
-    const [autoModeEnabled, setAutoModeEnabled] = useLocalSettingMutable('autoModeEnabled');
+    const globalAutoModeEnabled = useLocalSetting('autoModeEnabled');
+    
+    // Local state for this new session's auto mode (starts with global default)
+    const [sessionAutoModeEnabled, setSessionAutoModeEnabled] = React.useState<boolean>(() => globalAutoModeEnabled);
 
     //
     // Machines state
@@ -404,6 +407,9 @@ function NewSessionScreen() {
                 // Set permission and model modes on the session
                 storage.getState().updateSessionPermissionMode(result.sessionId, permissionMode);
                 storage.getState().updateSessionModelMode(result.sessionId, modelMode);
+                
+                // Set auto mode for this session
+                toggleAutoModeForSession(result.sessionId, sessionAutoModeEnabled);
 
                 // Send message
                 await sync.sendMessage(result.sessionId, input);
@@ -432,7 +438,7 @@ function NewSessionScreen() {
         } finally {
             setIsSending(false);
         }
-    }, [agentType, selectedMachineId, selectedPath, input, recentMachinePaths, sessionType, experimentsEnabled, permissionMode, modelMode]);
+    }, [agentType, selectedMachineId, selectedPath, input, recentMachinePaths, sessionType, experimentsEnabled, permissionMode, modelMode, sessionAutoModeEnabled, tempSessionData]);
 
     return (
         <KeyboardAvoidingView
@@ -482,6 +488,8 @@ function NewSessionScreen() {
                     onPermissionModeChange={handlePermissionModeChange}
                     modelMode={modelMode}
                     onModelModeChange={handleModelModeChange}
+                    autoModeEnabled={sessionAutoModeEnabled}
+                    onAutoModeChange={setSessionAutoModeEnabled}
                     autocompletePrefixes={[]}
                     autocompleteSuggestions={async () => []}
                 />
@@ -519,42 +527,6 @@ function NewSessionScreen() {
                             }}>
                                 {selectedPath}
                             </Text>
-                        </Pressable>
-                        
-                        {/* Auto Mode Toggle */}
-                        <Pressable
-                            style={(p) => ({
-                                backgroundColor: theme.colors.input.background,
-                                borderRadius: Platform.select({ default: 16, android: 20 }),
-                                paddingHorizontal: 12,
-                                paddingVertical: 10,
-                                marginBottom: 8,
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                opacity: p.pressed ? 0.7 : 1,
-                            })}
-                        >
-                            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                <Ionicons
-                                    name="play-circle-outline"
-                                    size={14}
-                                    color={theme.colors.button.secondary.tint}
-                                />
-                                <Text style={{
-                                    fontSize: 13,
-                                    color: theme.colors.button.secondary.tint,
-                                    fontWeight: '600',
-                                    marginLeft: 6,
-                                    ...Typography.default('semiBold'),
-                                }}>
-                                    {t('sessionInfo.autoMode')}
-                                </Text>
-                            </View>
-                            <Switch
-                                value={autoModeEnabled}
-                                onValueChange={setAutoModeEnabled}
-                            />
                         </Pressable>
                     </View>
                 </View>

@@ -10,6 +10,7 @@ import { VoiceAssistantStatusBar } from '@/components/VoiceAssistantStatusBar';
 import { useDraft } from '@/hooks/useDraft';
 import { useAutoMode } from '@/hooks/useAutoMode';
 import { Modal } from '@/modal';
+import { toggleAutoModeForSession, isAutoModeEnabledForSession } from '@/utils/autoModeUtils';
 import { voiceHooks } from '@/realtime/hooks/voiceHooks';
 import { startRealtimeSession, stopRealtimeSession, updateCurrentSessionId } from '@/realtime/RealtimeSession';
 import { gitStatusSync } from '@/sync/gitStatusSync';
@@ -201,6 +202,25 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
         storage.getState().updateSessionModelMode(sessionId, mode);
     }, [sessionId]);
 
+    // Get auto mode state for this session
+    const [autoModeEnabled, setAutoModeEnabledState] = React.useState(() => 
+        isAutoModeEnabledForSession(sessionId)
+    );
+
+    // Update local state when global or session-specific auto mode changes
+    React.useEffect(() => {
+        const unsubscribe = storage.subscribe((state) => {
+            setAutoModeEnabledState(isAutoModeEnabledForSession(sessionId));
+        });
+        return unsubscribe;
+    }, [sessionId]);
+
+    // Function to update auto mode
+    const updateAutoMode = React.useCallback((enabled: boolean) => {
+        toggleAutoModeForSession(sessionId, enabled);
+        setAutoModeEnabledState(enabled);
+    }, [sessionId]);
+
     // Memoize header-dependent styles to prevent re-renders
     const headerDependentStyles = React.useMemo(() => ({
         contentContainer: {
@@ -286,6 +306,8 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
             onPermissionModeChange={updatePermissionMode}
             modelMode={modelMode}
             onModelModeChange={updateModelMode}
+            autoModeEnabled={autoModeEnabled}
+            onAutoModeChange={updateAutoMode}
             metadata={session.metadata}
             connectionStatus={{
                 text: sessionStatus.statusText,
