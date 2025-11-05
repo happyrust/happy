@@ -532,7 +532,7 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                             styles.settingsOverlay,
                             { paddingHorizontal: screenWidth > 700 ? 0 : 8 }
                         ]}>
-                            <FloatingOverlay maxHeight={280} keyboardShouldPersistTaps="always">
+                            <FloatingOverlay maxHeight={400} showScrollIndicator={true} keyboardShouldPersistTaps="always">
                                 {/* Permission Mode Section */}
                                 <View style={styles.overlaySection}>
                                     <Text style={styles.overlaySectionTitle}>
