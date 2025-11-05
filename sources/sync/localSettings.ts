@@ -13,6 +13,18 @@ export const LocalSettingsSchema = z.object({
     markdownCopyV2: z.boolean().describe('Replace native paragraph selection with long-press modal for full markdown copy'),
     // CLI version acknowledgments - keyed by machineId
     acknowledgedCliVersions: z.record(z.string(), z.string()).describe('Acknowledged CLI versions per machine'),
+    // Auto mode settings
+    autoModeEnabled: z.boolean().describe('Enable auto mode - automatically send template messages when AI finishes responding'),
+    autoModeTemplates: z.array(z.object({
+        id: z.string(),
+        name: z.string(),
+        content: z.string(),
+    })).describe('Auto mode templates that can be automatically sent'),
+    autoModeSelectedTemplateId: z.string().nullable().describe('Currently selected template ID for auto mode'),
+    autoModeMaxCycles: z.number().describe('Maximum number of auto-send cycles (0 = unlimited)'),
+    // Per-session auto mode settings - keyed by sessionId
+    autoModeSessionEnabled: z.record(z.string(), z.boolean()).describe('Per-session auto mode enable state'),
+    autoModeCycleCount: z.record(z.string(), z.number()).describe('Per-session cycle count for auto mode'),
 });
 
 //
@@ -35,6 +47,18 @@ export const localSettingsDefaults: LocalSettings = {
     themePreference: 'adaptive',
     markdownCopyV2: false,
     acknowledgedCliVersions: {},
+    autoModeEnabled: false,
+    autoModeTemplates: [
+        {
+            id: 'default_template_1',
+            name: '提交并继续',
+            content: '提交当前代码，更新Changelog, 然后继续执行你的建议',
+        },
+    ],
+    autoModeSelectedTemplateId: 'default_template_1',
+    autoModeMaxCycles: 0, // 0 = unlimited
+    autoModeSessionEnabled: {},
+    autoModeCycleCount: {},
 };
 Object.freeze(localSettingsDefaults);
 

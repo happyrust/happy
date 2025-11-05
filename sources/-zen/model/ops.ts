@@ -1,5 +1,5 @@
 import { AuthCredentials } from '@/auth/tokenStorage';
-import { sync } from '../../sync/sync';
+import { getSync } from '../../sync/syncSingleton';
 import { storage } from '../../sync/storage';
 import {
     kvGet,
@@ -67,10 +67,12 @@ function getTodoKey(id: string): string {
 }
 
 async function encryptTodoData(data: any): Promise<string> {
+    const sync = await getSync();
     return await sync.encryption.encryptRaw(data);
 }
 
 async function decryptTodoData(encrypted: string): Promise<any> {
+    const sync = await getSync();
     return await sync.encryption.decryptRaw(encrypted);
 }
 

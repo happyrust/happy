@@ -15,12 +15,12 @@ import { loadSettings, loadLocalSettings, saveLocalSettings, saveSettings, loadP
 import type { PermissionMode } from '@/components/PermissionModeSelector';
 import type { CustomerInfo } from './revenueCat/types';
 import React from "react";
-import { sync } from "./sync";
 import { getCurrentRealtimeSessionId, getVoiceSession } from '@/realtime/RealtimeSession';
 import { isMutableTool } from "@/components/tools/knownTools";
 import { projectManager } from "./projectManager";
 import { DecryptedArtifact } from "./artifactTypes";
 import { FeedItem } from "./feedTypes";
+import { getSync, getSyncSync } from "./syncSingleton";
 
 /**
  * Centralized session online state resolver
@@ -962,9 +962,7 @@ export const storage = create<StorageState>()((set, get) => {
             return get().users[userId];  // Returns UserProfile | null | undefined
         },
         assumeUsers: async (userIds: string[]) => {
-            // This will be implemented in sync.ts as it needs access to credentials
-            // Just a placeholder here for the interface
-            const { sync } = await import('./sync');
+            const sync = await getSync();
             return sync.assumeUsers(userIds);
         },
         // Feed methods
@@ -1076,7 +1074,18 @@ export function useSettings(): Settings {
 
 export function useSettingMutable<K extends keyof Settings>(name: K): [Settings[K], (value: Settings[K]) => void] {
     const setValue = React.useCallback((value: Settings[K]) => {
-        sync.applySettings({ [name]: value });
+        const sync = getSyncSync();
+        if (sync) {
+            sync.applySettings({ [name]: value });
+        } else {
+            void getSync()
+                .then((loadedSync) => {
+                    loadedSync.applySettings({ [name]: value });
+                })
+                .catch((error) => {
+                    console.error('Failed to lazy-load sync for settings update:', error);
+                });
+        }
     }, [name]);
     const value = useSetting(name);
     return [value, setValue];

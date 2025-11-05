@@ -398,6 +398,12 @@ export const SettingsView = React.memo(function SettingsView() {
                     icon={<Ionicons name="flask-outline" size={29} color="#FF9500" />}
                     onPress={() => router.push('/settings/features')}
                 />
+                <Item
+                    title="Auto Mode"
+                    subtitle="Automatically send template messages when AI finishes responding"
+                    icon={<Ionicons name="play-circle-outline" size={29} color="#34C759" />}
+                    onPress={() => router.push('/settings/autoMode')}
+                />
                 {experiments && (
                     <Item
                         title={t('settings.usage')}

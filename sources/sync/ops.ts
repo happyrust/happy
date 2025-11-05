@@ -4,7 +4,7 @@
  */
 
 import { apiSocket } from './apiSocket';
-import { sync } from './sync';
+import { getSync } from './syncSingleton';
 import type { MachineMetadata } from './storageTypes';
 
 // Strict type definitions for all operations
@@ -235,6 +235,7 @@ export async function machineUpdateMetadata(
     let currentMetadata = { ...metadata };
     let retryCount = 0;
 
+    const sync = await getSync();
     const machineEncryption = sync.encryption.getMachineEncryption(machineId);
     if (!machineEncryption) {
         throw new Error(`Machine encryption not found for ${machineId}`);

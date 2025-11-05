@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Modal } from '@/modal';
 import { CommandPalette } from './CommandPalette';
 import { Command } from './types';
 import { useGlobalKeyboard } from '@/hooks/useGlobalKeyboard';
@@ -9,6 +8,15 @@ import { useAuth } from '@/auth/AuthContext';
 import { storage } from '@/sync/storage';
 import { useShallow } from 'zustand/react/shallow';
 import { useNavigateToSession } from '@/hooks/useNavigateToSession';
+
+let modalModulePromise: Promise<typeof import('@/modal')> | null = null;
+
+async function loadModal() {
+    if (!modalModulePromise) {
+        modalModulePromise = import('@/modal');
+    }
+    return modalModulePromise;
+}
 
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -126,12 +134,18 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
     const showCommandPalette = useCallback(() => {
         if (Platform.OS !== 'web' || !commandPaletteEnabled) return;
         
-        Modal.show({
-            component: CommandPalette,
-            props: {
-                commands,
-            }
-        } as any);
+        void loadModal()
+            .then(({ Modal }) => {
+                Modal.show({
+                    component: CommandPalette,
+                    props: {
+                        commands,
+                    }
+                } as any);
+            })
+            .catch((error) => {
+                console.error('Failed to load modal module for CommandPalette:', error);
+            });
     }, [commands, commandPaletteEnabled]);
 
     // Set up global keyboard handler only if feature is enabled
