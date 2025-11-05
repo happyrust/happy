@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Platform, Pressable, useWindowDimensions } from 'react-native';
 import { Typography } from '@/constants/Typography';
-import { useAllMachines, storage, useSetting } from '@/sync/storage';
+import { useAllMachines, storage, useSetting, useLocalSettingMutable } from '@/sync/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useUnistyles } from 'react-native-unistyles';
@@ -21,6 +21,7 @@ import { createWorktree } from '@/utils/createWorktree';
 import { getTempData, type NewSessionData } from '@/utils/tempDataStore';
 import { linkTaskToSession } from '@/-zen/model/taskSessionLink';
 import { PermissionMode, ModelMode } from '@/components/PermissionModeSelector';
+import { Switch } from '@/components/Switch';
 
 // Simple temporary state for passing selections back from picker screens
 let onMachineSelected: (machineId: string) => void = () => { };
@@ -117,6 +118,7 @@ function NewSessionScreen() {
     const lastUsedPermissionMode = useSetting('lastUsedPermissionMode');
     const lastUsedModelMode = useSetting('lastUsedModelMode');
     const experimentsEnabled = useSetting('experiments');
+    const [autoModeEnabled, setAutoModeEnabled] = useLocalSettingMutable('autoModeEnabled');
 
     //
     // Machines state
@@ -266,7 +268,7 @@ function NewSessionScreen() {
                 return lastUsedModelMode as ModelMode;
             }
         }
-        return agentType === 'codex' ? 'gpt-5-codex-high' : 'default';
+        return agentType === 'codex' ? 'gpt-5-codex-medium' : 'default';
     });
 
     // Reset permission and model modes when agent type changes
@@ -274,7 +276,7 @@ function NewSessionScreen() {
         if (agentType === 'codex') {
             // Switch to codex-compatible modes
             setPermissionMode('yolo');
-            setModelMode('gpt-5-codex-high');
+            setModelMode('gpt-5-codex-medium');
         } else {
             // Switch to claude-compatible modes
             setPermissionMode('default');
@@ -517,6 +519,42 @@ function NewSessionScreen() {
                             }}>
                                 {selectedPath}
                             </Text>
+                        </Pressable>
+                        
+                        {/* Auto Mode Toggle */}
+                        <Pressable
+                            style={(p) => ({
+                                backgroundColor: theme.colors.input.background,
+                                borderRadius: Platform.select({ default: 16, android: 20 }),
+                                paddingHorizontal: 12,
+                                paddingVertical: 10,
+                                marginBottom: 8,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                opacity: p.pressed ? 0.7 : 1,
+                            })}
+                        >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                <Ionicons
+                                    name="play-circle-outline"
+                                    size={14}
+                                    color={theme.colors.button.secondary.tint}
+                                />
+                                <Text style={{
+                                    fontSize: 13,
+                                    color: theme.colors.button.secondary.tint,
+                                    fontWeight: '600',
+                                    marginLeft: 6,
+                                    ...Typography.default('semiBold'),
+                                }}>
+                                    {t('sessionInfo.autoMode')}
+                                </Text>
+                            </View>
+                            <Switch
+                                value={autoModeEnabled}
+                                onValueChange={setAutoModeEnabled}
+                            />
                         </Pressable>
                     </View>
                 </View>
