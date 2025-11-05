@@ -372,6 +372,10 @@ export const pl: TranslationStructure = {
         deleteSessionWarning: 'Ta operacja jest nieodwracalna. Wszystkie wiadomości i dane powiązane z tą sesją zostaną trwale usunięte.',
         failedToDeleteSession: 'Nie udało się usunąć sesji',
         sessionDeleted: 'Sesja została pomyślnie usunięta',
+        autoMode: 'Tryb Automatyczny',
+        autoModeEnabled: 'Tryb automatyczny jest włączony dla tej sesji',
+        autoModeDisabled: 'Tryb automatyczny jest wyłączony dla tej sesji',
+        autoModeDescription: 'Automatycznie wysyłaj wiadomości szablonowe, gdy AI zakończy odpowiadanie',
     },
 
     components: {

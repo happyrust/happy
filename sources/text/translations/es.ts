@@ -361,6 +361,10 @@ export const es: TranslationStructure = {
         deleteSessionWarning: 'Esta acción no se puede deshacer. Todos los mensajes y datos asociados con esta sesión se eliminarán permanentemente.',
         failedToDeleteSession: 'Error al eliminar la sesión',
         sessionDeleted: 'Sesión eliminada exitosamente',
+        autoMode: 'Modo Automático',
+        autoModeEnabled: 'El modo automático está habilitado para esta sesión',
+        autoModeDisabled: 'El modo automático está deshabilitado para esta sesión',
+        autoModeDescription: 'Enviar automáticamente mensajes de plantilla cuando la IA termine de responder',
         
     },
 

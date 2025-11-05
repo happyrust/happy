@@ -7,7 +7,7 @@ import { Item } from '@/components/Item';
 import { ItemGroup } from '@/components/ItemGroup';
 import { ItemList } from '@/components/ItemList';
 import { Avatar } from '@/components/Avatar';
-import { useSession, useIsDataReady } from '@/sync/storage';
+import { useSession, useIsDataReady, useLocalSetting } from '@/sync/storage';
 import { getSessionName, useSessionStatus, formatOSPlatform, formatPathRelativeToHome, getSessionAvatarId } from '@/utils/sessionUtils';
 import * as Clipboard from 'expo-clipboard';
 import { Modal } from '@/modal';
@@ -20,6 +20,8 @@ import { CodeView } from '@/components/CodeView';
 import { Session } from '@/sync/storageTypes';
 import { useHappyAction } from '@/hooks/useHappyAction';
 import { HappyError } from '@/utils/errors';
+import { Switch } from '@/components/Switch';
+import { toggleAutoModeForSession, isAutoModeEnabledForSession } from '@/utils/autoModeUtils';
 
 // Animated status dot component
 function StatusDot({ color, isPulsing, size = 8 }: { color: string; isPulsing?: boolean; size?: number }) {
@@ -66,6 +68,14 @@ function SessionInfoContent({ session }: { session: Session }) {
     const devModeEnabled = __DEV__;
     const sessionName = getSessionName(session);
     const sessionStatus = useSessionStatus(session);
+    
+    // Check if auto mode is enabled for this session (session-specific override or global setting)
+    const isSessionAutoModeEnabled = isAutoModeEnabledForSession(session.id);
+    
+    // Handler to toggle auto mode for this session
+    const handleToggleAutoMode = useCallback(() => {
+        toggleAutoModeForSession(session.id, !isSessionAutoModeEnabled);
+    }, [session.id, isSessionAutoModeEnabled]);
     
     // Check if CLI version is outdated
     const isCliOutdated = session.metadata?.version && !isVersionSupported(session.metadata.version, MINIMUM_CLI_VERSION);
@@ -243,6 +253,25 @@ function SessionInfoContent({ session }: { session: Session }) {
                         title={t('sessionInfo.sequence')}
                         detail={session.seq.toString()}
                         icon={<Ionicons name="git-commit-outline" size={29} color="#007AFF" />}
+                        showChevron={false}
+                    />
+                </ItemGroup>
+
+                {/* Auto Mode Settings */}
+                <ItemGroup 
+                    title={t('sessionInfo.autoMode')}
+                    footer={t('sessionInfo.autoModeDescription')}
+                >
+                    <Item
+                        title={t('sessionInfo.autoMode')}
+                        subtitle={isSessionAutoModeEnabled ? t('sessionInfo.autoModeEnabled') : t('sessionInfo.autoModeDisabled')}
+                        icon={<Ionicons name="play-circle-outline" size={29} color="#34C759" />}
+                        rightElement={
+                            <Switch
+                                value={isSessionAutoModeEnabled}
+                                onValueChange={handleToggleAutoMode}
+                            />
+                        }
                         showChevron={false}
                     />
                 </ItemGroup>

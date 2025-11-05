@@ -361,6 +361,10 @@ export const ca: TranslationStructure = {
         deleteSessionWarning: 'Aquesta acció no es pot desfer. Tots els missatges i dades associats amb aquesta sessió s\'eliminaran permanentment.',
         failedToDeleteSession: 'Error en eliminar la sessió',
         sessionDeleted: 'Sessió eliminada amb èxit',
+        autoMode: 'Mode Automàtic',
+        autoModeEnabled: 'El mode automàtic està habilitat per a aquesta sessió',
+        autoModeDisabled: 'El mode automàtic està deshabilitat per a aquesta sessió',
+        autoModeDescription: 'Enviar automàticament missatges de plantilla quan la IA acabi de respondre',
         
     },
 

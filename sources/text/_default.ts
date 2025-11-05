@@ -361,6 +361,10 @@ export const en = {
         deleteSessionWarning: 'This action cannot be undone. All messages and data associated with this session will be permanently deleted.',
         failedToDeleteSession: 'Failed to delete session',
         sessionDeleted: 'Session deleted successfully',
+        autoMode: 'Auto Mode',
+        autoModeEnabled: 'Auto mode is enabled for this session',
+        autoModeDisabled: 'Auto mode is disabled for this session',
+        autoModeDescription: 'Automatically send template messages when AI finishes responding',
         
     },
 

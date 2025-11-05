@@ -336,6 +336,10 @@ export const ru: TranslationStructure = {
         deleteSessionWarning: 'Это действие нельзя отменить. Все сообщения и данные, связанные с этой сессией, будут удалены навсегда.',
         failedToDeleteSession: 'Не удалось удалить сессию',
         sessionDeleted: 'Сессия успешно удалена',
+        autoMode: 'Автоматический режим',
+        autoModeEnabled: 'Автоматический режим включен для этой сессии',
+        autoModeDisabled: 'Автоматический режим отключен для этой сессии',
+        autoModeDescription: 'Автоматически отправлять шаблонные сообщения, когда ИИ завершает ответ',
     },
 
     components: {

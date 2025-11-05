@@ -361,6 +361,10 @@ export const pt: TranslationStructure = {
         deleteSessionWarning: 'Esta ação não pode ser desfeita. Todas as mensagens e dados associados a esta sessão serão excluídos permanentemente.',
         failedToDeleteSession: 'Falha ao excluir sessão',
         sessionDeleted: 'Sessão excluída com sucesso',
+        autoMode: 'Modo Automático',
+        autoModeEnabled: 'O modo automático está habilitado para esta sessão',
+        autoModeDisabled: 'O modo automático está desabilitado para esta sessão',
+        autoModeDescription: 'Enviar automaticamente mensagens de modelo quando a IA terminar de responder',
         
     },
 

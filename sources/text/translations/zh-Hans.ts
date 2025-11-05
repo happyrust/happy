@@ -363,6 +363,10 @@ export const zhHans: TranslationStructure = {
         deleteSessionWarning: '此操作无法撤销。与此会话相关的所有消息和数据将被永久删除。',
         failedToDeleteSession: '删除会话失败',
         sessionDeleted: '会话删除成功',
+        autoMode: '自动模式',
+        autoModeEnabled: '此会话已启用自动模式',
+        autoModeDisabled: '此会话已禁用自动模式',
+        autoModeDescription: '当 AI 完成响应时自动发送模板消息',
         
     },
 
