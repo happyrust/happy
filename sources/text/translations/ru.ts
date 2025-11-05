@@ -43,6 +43,7 @@ export const ru: TranslationStructure = {
     common: {
         // Simple string constants
         cancel: 'Отмена',
+        confirm: 'Подтвердить',
         authenticate: 'Авторизация',
         save: 'Сохранить',
         error: 'Ошибка',
@@ -340,6 +341,13 @@ export const ru: TranslationStructure = {
         autoModeEnabled: 'Автоматический режим включен для этой сессии',
         autoModeDisabled: 'Автоматический режим отключен для этой сессии',
         autoModeDescription: 'Автоматически отправлять шаблонные сообщения, когда ИИ завершает ответ',
+        autoModeEnabledOverride: 'Автоматический режим включен (переопределение сессии)',
+        autoModeDisabledOverride: 'Автоматический режим отключен (переопределение сессии)',
+        autoModeOverrideDescription: ({ globalState }: { globalState: string }) => `Эта сессия имеет пользовательскую настройку автоматического режима. Глобальная настройка: ${globalState}`,
+        useGlobalAutoMode: 'Использовать глобальную настройку',
+        useGlobalAutoModeDescription: 'Вернуться к глобальной настройке автоматического режима',
+        clearAutoModeOverride: 'Очистить переопределение сессии',
+        clearAutoModeOverrideMessage: 'Это удалит настройку автоматического режима для этой сессии и будет использоваться глобальная настройка.',
     },
 
     components: {

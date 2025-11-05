@@ -32,6 +32,7 @@ export const en = {
     common: {
         // Simple string constants
         cancel: 'Cancel',
+        confirm: 'Confirm',
         authenticate: 'Authenticate',
         save: 'Save',
         error: 'Error',
@@ -365,6 +366,13 @@ export const en = {
         autoModeEnabled: 'Auto mode is enabled for this session',
         autoModeDisabled: 'Auto mode is disabled for this session',
         autoModeDescription: 'Automatically send template messages when AI finishes responding',
+        autoModeEnabledOverride: 'Auto mode is enabled (session override)',
+        autoModeDisabledOverride: 'Auto mode is disabled (session override)',
+        autoModeOverrideDescription: ({ globalState }: { globalState: string }) => `This session has a custom auto mode setting. Global setting: ${globalState}`,
+        useGlobalAutoMode: 'Use Global Setting',
+        useGlobalAutoModeDescription: 'Revert to the global auto mode setting',
+        clearAutoModeOverride: 'Clear Session Override',
+        clearAutoModeOverrideMessage: 'This will remove the session-specific auto mode setting and use the global setting instead.',
         
     },
 

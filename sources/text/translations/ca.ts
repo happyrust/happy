@@ -32,6 +32,7 @@ export const ca: TranslationStructure = {
     common: {
         // Simple string constants
         cancel: 'Cancel·la',
+        confirm: 'Confirma',
         authenticate: 'Autentica',
         save: 'Desa',
         error: 'Error',
@@ -365,6 +366,13 @@ export const ca: TranslationStructure = {
         autoModeEnabled: 'El mode automàtic està habilitat per a aquesta sessió',
         autoModeDisabled: 'El mode automàtic està deshabilitat per a aquesta sessió',
         autoModeDescription: 'Enviar automàticament missatges de plantilla quan la IA acabi de respondre',
+        autoModeEnabledOverride: 'El mode automàtic està habilitat (sobrescriptura de sessió)',
+        autoModeDisabledOverride: 'El mode automàtic està deshabilitat (sobrescriptura de sessió)',
+        autoModeOverrideDescription: ({ globalState }: { globalState: string }) => `Aquesta sessió té una configuració personalitzada del mode automàtic. Configuració global: ${globalState}`,
+        useGlobalAutoMode: 'Utilitzar configuració global',
+        useGlobalAutoModeDescription: 'Revertir a la configuració global del mode automàtic',
+        clearAutoModeOverride: 'Esborrar sobrescriptura de sessió',
+        clearAutoModeOverrideMessage: 'Això eliminarà la configuració del mode automàtic específica d\'aquesta sessió i s\'utilitzarà la configuració global.',
         
     },
 

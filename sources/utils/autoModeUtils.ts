@@ -92,4 +92,24 @@ export function isAutoModeEnabledForSession(sessionId: string): boolean {
     return localSettings.autoModeSessionEnabled[sessionId] ?? localSettings.autoModeEnabled;
 }
 
+/**
+ * Check if a session has a specific override for auto mode (not using global setting)
+ */
+export function hasSessionAutoModeOverride(sessionId: string): boolean {
+    const localSettings = storage.getState().localSettings;
+    return sessionId in localSettings.autoModeSessionEnabled;
+}
+
+/**
+ * Clear session-specific auto mode override (revert to global setting)
+ */
+export function clearSessionAutoModeOverride(sessionId: string): void {
+    const sessionEnabled = storage.getState().localSettings.autoModeSessionEnabled;
+    const updated = { ...sessionEnabled };
+    delete updated[sessionId];
+    storage.getState().applyLocalSettings({
+        autoModeSessionEnabled: updated,
+    });
+}
+
 

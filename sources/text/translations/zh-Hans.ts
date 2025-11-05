@@ -34,6 +34,7 @@ export const zhHans: TranslationStructure = {
     common: {
         // Simple string constants
         cancel: '取消',
+        confirm: '确认',
         authenticate: '认证',
         save: '保存',
         error: '错误',
@@ -367,6 +368,13 @@ export const zhHans: TranslationStructure = {
         autoModeEnabled: '此会话已启用自动模式',
         autoModeDisabled: '此会话已禁用自动模式',
         autoModeDescription: '当 AI 完成响应时自动发送模板消息',
+        autoModeEnabledOverride: '自动模式已启用（会话覆盖）',
+        autoModeDisabledOverride: '自动模式已禁用（会话覆盖）',
+        autoModeOverrideDescription: ({ globalState }: { globalState: string }) => `此会话有自定义自动模式设置。全局设置：${globalState}`,
+        useGlobalAutoMode: '使用全局设置',
+        useGlobalAutoModeDescription: '恢复到全局自动模式设置',
+        clearAutoModeOverride: '清除会话覆盖',
+        clearAutoModeOverrideMessage: '这将删除会话特定的自动模式设置，改用全局设置。',
         
     },
 

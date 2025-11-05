@@ -43,6 +43,7 @@ export const pl: TranslationStructure = {
     common: {
         // Simple string constants
         cancel: 'Anuluj',
+        confirm: 'Potwierdź',
         authenticate: 'Uwierzytelnij',
         save: 'Zapisz',
         error: 'Błąd',
@@ -376,6 +377,13 @@ export const pl: TranslationStructure = {
         autoModeEnabled: 'Tryb automatyczny jest włączony dla tej sesji',
         autoModeDisabled: 'Tryb automatyczny jest wyłączony dla tej sesji',
         autoModeDescription: 'Automatycznie wysyłaj wiadomości szablonowe, gdy AI zakończy odpowiadanie',
+        autoModeEnabledOverride: 'Tryb automatyczny jest włączony (nadpisanie sesji)',
+        autoModeDisabledOverride: 'Tryb automatyczny jest wyłączony (nadpisanie sesji)',
+        autoModeOverrideDescription: ({ globalState }: { globalState: string }) => `Ta sesja ma niestandardowe ustawienie trybu automatycznego. Ustawienie globalne: ${globalState}`,
+        useGlobalAutoMode: 'Użyj ustawienia globalnego',
+        useGlobalAutoModeDescription: 'Przywróć globalne ustawienie trybu automatycznego',
+        clearAutoModeOverride: 'Wyczyść nadpisanie sesji',
+        clearAutoModeOverrideMessage: 'Spowoduje to usunięcie ustawienia trybu automatycznego dla tej sesji i użycie ustawienia globalnego.',
     },
 
     components: {

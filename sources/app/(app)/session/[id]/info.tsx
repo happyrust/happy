@@ -7,7 +7,7 @@ import { Item } from '@/components/Item';
 import { ItemGroup } from '@/components/ItemGroup';
 import { ItemList } from '@/components/ItemList';
 import { Avatar } from '@/components/Avatar';
-import { useSession, useIsDataReady, useLocalSetting } from '@/sync/storage';
+import { useSession, useIsDataReady } from '@/sync/storage';
 import { getSessionName, useSessionStatus, formatOSPlatform, formatPathRelativeToHome, getSessionAvatarId } from '@/utils/sessionUtils';
 import * as Clipboard from 'expo-clipboard';
 import { Modal } from '@/modal';
@@ -21,7 +21,8 @@ import { Session } from '@/sync/storageTypes';
 import { useHappyAction } from '@/hooks/useHappyAction';
 import { HappyError } from '@/utils/errors';
 import { Switch } from '@/components/Switch';
-import { toggleAutoModeForSession, isAutoModeEnabledForSession } from '@/utils/autoModeUtils';
+import { toggleAutoModeForSession, isAutoModeEnabledForSession, hasSessionAutoModeOverride, clearSessionAutoModeOverride } from '@/utils/autoModeUtils';
+import { useLocalSetting } from '@/sync/storage';
 
 // Animated status dot component
 function StatusDot({ color, isPulsing, size = 8 }: { color: string; isPulsing?: boolean; size?: number }) {
@@ -71,11 +72,28 @@ function SessionInfoContent({ session }: { session: Session }) {
     
     // Check if auto mode is enabled for this session (session-specific override or global setting)
     const isSessionAutoModeEnabled = isAutoModeEnabledForSession(session.id);
+    const hasOverride = hasSessionAutoModeOverride(session.id);
+    const globalAutoModeEnabled = useLocalSetting('autoModeEnabled');
     
     // Handler to toggle auto mode for this session
     const handleToggleAutoMode = useCallback(() => {
         toggleAutoModeForSession(session.id, !isSessionAutoModeEnabled);
     }, [session.id, isSessionAutoModeEnabled]);
+    
+    // Handler to clear session override and use global setting
+    const handleClearOverride = useCallback(async () => {
+        const confirmed = await Modal.confirm(
+            t('sessionInfo.clearAutoModeOverride'),
+            t('sessionInfo.clearAutoModeOverrideMessage'),
+            {
+                cancelText: t('common.cancel'),
+                confirmText: t('common.confirm'),
+            }
+        );
+        if (confirmed) {
+            clearSessionAutoModeOverride(session.id);
+        }
+    }, [session.id]);
     
     // Check if CLI version is outdated
     const isCliOutdated = session.metadata?.version && !isVersionSupported(session.metadata.version, MINIMUM_CLI_VERSION);
@@ -260,11 +278,17 @@ function SessionInfoContent({ session }: { session: Session }) {
                 {/* Auto Mode Settings */}
                 <ItemGroup 
                     title={t('sessionInfo.autoMode')}
-                    footer={t('sessionInfo.autoModeDescription')}
+                    footer={hasOverride 
+                        ? t('sessionInfo.autoModeOverrideDescription', { globalState: globalAutoModeEnabled ? t('sessionInfo.autoModeEnabled') : t('sessionInfo.autoModeDisabled') })
+                        : t('sessionInfo.autoModeDescription')
+                    }
                 >
                     <Item
                         title={t('sessionInfo.autoMode')}
-                        subtitle={isSessionAutoModeEnabled ? t('sessionInfo.autoModeEnabled') : t('sessionInfo.autoModeDisabled')}
+                        subtitle={hasOverride 
+                            ? (isSessionAutoModeEnabled ? t('sessionInfo.autoModeEnabledOverride') : t('sessionInfo.autoModeDisabledOverride'))
+                            : (isSessionAutoModeEnabled ? t('sessionInfo.autoModeEnabled') : t('sessionInfo.autoModeDisabled'))
+                        }
                         icon={<Ionicons name="play-circle-outline" size={29} color="#34C759" />}
                         rightElement={
                             <Switch
@@ -274,6 +298,14 @@ function SessionInfoContent({ session }: { session: Session }) {
                         }
                         showChevron={false}
                     />
+                    {hasOverride && (
+                        <Item
+                            title={t('sessionInfo.useGlobalAutoMode')}
+                            subtitle={t('sessionInfo.useGlobalAutoModeDescription')}
+                            icon={<Ionicons name="refresh-outline" size={29} color="#007AFF" />}
+                            onPress={handleClearOverride}
+                        />
+                    )}
                 </ItemGroup>
 
                 {/* Quick Actions */}

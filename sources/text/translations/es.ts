@@ -32,6 +32,7 @@ export const es: TranslationStructure = {
     common: {
         // Simple string constants
         cancel: 'Cancelar',
+        confirm: 'Confirmar',
         authenticate: 'Autenticar',
         save: 'Guardar',
         error: 'Error',
@@ -365,6 +366,13 @@ export const es: TranslationStructure = {
         autoModeEnabled: 'El modo automático está habilitado para esta sesión',
         autoModeDisabled: 'El modo automático está deshabilitado para esta sesión',
         autoModeDescription: 'Enviar automáticamente mensajes de plantilla cuando la IA termine de responder',
+        autoModeEnabledOverride: 'El modo automático está habilitado (sobrescritura de sesión)',
+        autoModeDisabledOverride: 'El modo automático está deshabilitado (sobrescritura de sesión)',
+        autoModeOverrideDescription: ({ globalState }: { globalState: string }) => `Esta sesión tiene una configuración personalizada del modo automático. Configuración global: ${globalState}`,
+        useGlobalAutoMode: 'Usar configuración global',
+        useGlobalAutoModeDescription: 'Revertir a la configuración global del modo automático',
+        clearAutoModeOverride: 'Limpiar sobrescritura de sesión',
+        clearAutoModeOverrideMessage: 'Esto eliminará la configuración del modo automático específica de esta sesión y se usará la configuración global.',
         
     },
 
