@@ -55,25 +55,15 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Decode Android keystore
-        run: |
-          if [[ -z "${ANDROID_KEYSTORE_B64}" ]]; then
-            echo "ANDROID_KEYSTORE_B64 secret is missing" >&2
-            exit 1
-          fi
-          echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/release.keystore
-        env:
-          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
-
       - name: Build release APK
         run: |
           cd android
           ./gradlew assembleRelease
         env:
-          ORG_GRADLE_PROJECT_RELEASE_STORE_FILE: release.keystore
-          ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
-          ORG_GRADLE_PROJECT_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ORG_GRADLE_PROJECT_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_RELEASE_STORE_FILE: debug.keystore
+          ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD: android
+          ORG_GRADLE_PROJECT_RELEASE_KEY_ALIAS: androiddebugkey
+          ORG_GRADLE_PROJECT_RELEASE_KEY_PASSWORD: android
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
