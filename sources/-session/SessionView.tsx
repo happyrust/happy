@@ -257,11 +257,50 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
         }
     }, [sessionId]);
 
+    // Check if session has active operations (similar to useAutoMode logic)
+    const hasActiveOperations = React.useCallback((currentSession: Session | null): boolean => {
+        if (!currentSession) return false;
+        
+        // Check if session is still thinking
+        if (currentSession.thinking) return true;
+        
+        // Check for pending permission requests
+        if (currentSession.agentState?.requests && Object.keys(currentSession.agentState.requests).length > 0) {
+            return true;
+        }
+        
+        // Check for running tool calls in messages
+        const currentMessages = storage.getState().sessionMessages[sessionId]?.messages || [];
+        for (const message of currentMessages) {
+            if (message.kind === 'tool-call' && message.tool?.state === 'running') {
+                return true;
+            }
+        }
+        
+        return false;
+    }, [sessionId]);
+    
     // Monitor session state for repeat send continuation
     const prevSessionStateRef = React.useRef<string | null>(null);
+    const checkTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+    
+    React.useEffect(() => {
+        // Cleanup timeout on unmount
+        return () => {
+            if (checkTimeoutRef.current) {
+                clearTimeout(checkTimeoutRef.current);
+                checkTimeoutRef.current = null;
+            }
+        };
+    }, [sessionId]);
+    
     React.useEffect(() => {
         if (!session) {
             prevSessionStateRef.current = null;
+            if (checkTimeoutRef.current) {
+                clearTimeout(checkTimeoutRef.current);
+                checkTimeoutRef.current = null;
+            }
             return;
         }
         
@@ -281,16 +320,42 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
             if (sessionStatus.isConnected && session.presence === 'online') {
                 // Check if we need to send more messages
                 if (repeatState.sentCount < repeatState.totalTimes) {
-                    // Wait a bit to ensure all tool calls are complete
-                    setTimeout(() => {
+                    // Clear any existing timeout
+                    if (checkTimeoutRef.current) {
+                        clearTimeout(checkTimeoutRef.current);
+                        checkTimeoutRef.current = null;
+                    }
+                    
+                    // Function to check if it's safe to send next message
+                    const checkAndSend = (attempt: number = 0) => {
+                        const maxAttempts = 5;
+                        const baseDelay = 500;
+                        const delay = baseDelay * (attempt + 1);
+                        
                         const currentRepeatState = repeatSendStateRef.current;
                         if (!currentRepeatState || !currentRepeatState.active) return;
                         
-                        // Double-check session is still ready
+                        // Get fresh session state
                         const currentSession = storage.getState().sessions[sessionId];
-                        if (!currentSession || currentSession.thinking || currentSession.presence !== 'online') return;
+                        if (!currentSession) return;
                         
-                        // Send next message
+                        // Check if session is still online and not thinking
+                        if (currentSession.presence !== 'online' || currentSession.thinking) {
+                            return;
+                        }
+                        
+                        // Check for active operations (running tools, pending permissions, etc.)
+                        if (hasActiveOperations(currentSession)) {
+                            // Still has active operations, check again after delay
+                            if (attempt < maxAttempts) {
+                                checkTimeoutRef.current = setTimeout(() => {
+                                    checkAndSend(attempt + 1);
+                                }, delay);
+                            }
+                            return;
+                        }
+                        
+                        // All checks passed - safe to send next message
                         sync.sendMessage(sessionId, currentRepeatState.message);
                         trackMessageSent();
                         currentRepeatState.sentCount += 1;
@@ -300,7 +365,12 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
                         if (currentRepeatState.sentCount >= currentRepeatState.totalTimes) {
                             repeatSendStateRef.current = null;
                         }
-                    }, 500);
+                    };
+                    
+                    // Start checking after initial delay
+                    checkTimeoutRef.current = setTimeout(() => {
+                        checkAndSend(0);
+                    }, 300);
                 }
             } else {
                 // Connection lost, cancel repeat send
@@ -309,7 +379,7 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
         }
         
         prevSessionStateRef.current = currentState;
-    }, [session, sessionStatus.state, sessionStatus.isConnected, session?.presence, sessionId]);
+    }, [session, sessionStatus.state, sessionStatus.isConnected, session?.presence, session?.thinking, session?.agentState, sessionId, hasActiveOperations]);
 
     // Memoize header-dependent styles to prevent re-renders
     const headerDependentStyles = React.useMemo(() => ({
