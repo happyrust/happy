@@ -316,8 +316,26 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
     // Template picker state
     const [showTemplatePicker, setShowTemplatePicker] = React.useState(false);
     
-    // Repeat times state (for template picker)
+    // Repeat times state (persistent across template selections)
     const [repeatTimes, setRepeatTimes] = React.useState(1);
+    
+    // Handler for send button that respects repeat times
+    const handleSendWithRepeat = React.useCallback(() => {
+        if (!hasText) {
+            props.onMicPress?.();
+            return;
+        }
+        
+        if (repeatTimes > 1 && props.onSendMultiple) {
+            // Use repeat send
+            props.onSendMultiple(repeatTimes, props.value);
+            // Reset repeat times after sending
+            setRepeatTimes(1);
+        } else {
+            // Normal send
+            props.onSend();
+        }
+    }, [hasText, repeatTimes, props.onSendMultiple, props.onSend, props.value, props.onMicPress]);
     
     // Handler to save current message as template
     const handleSaveAsTemplate = React.useCallback(async () => {
@@ -758,16 +776,10 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                                 key={template.id}
                                                 onPress={() => {
                                                     hapticsLight();
-                                                    if (props.onSendMultiple) {
-                                                        // Send template content N times
-                                                        props.onSendMultiple(repeatTimes, template.content);
-                                                    } else {
-                                                        // Fallback: just fill input
-                                                        props.onChangeText(template.content);
-                                                    }
+                                                    // Just fill the template content into input
+                                                    props.onChangeText(template.content);
                                                     setShowTemplatePicker(false);
-                                                    // Reset repeat times to default
-                                                    setRepeatTimes(1);
+                                                    // Keep repeatTimes setting (don't reset)
                                                 }}
                                                 style={({ pressed }) => ({
                                                     paddingHorizontal: 16,
@@ -1339,6 +1351,31 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                     : styles.sendButtonInactive
                             ]}
                         >
+                            {/* Repeat times badge */}
+                            {repeatTimes > 1 && hasText && (
+                                <View style={{
+                                    position: 'absolute',
+                                    top: -6,
+                                    right: -6,
+                                    backgroundColor: '#FF9500',
+                                    borderRadius: 10,
+                                    minWidth: 20,
+                                    height: 20,
+                                    paddingHorizontal: 6,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    zIndex: 10,
+                                }}>
+                                    <Text style={{
+                                        fontSize: 11,
+                                        fontWeight: '700',
+                                        color: '#FFFFFF',
+                                        ...Typography.default('bold')
+                                    }}>
+                                        {repeatTimes}
+                                    </Text>
+                                </View>
+                            )}
                             <Pressable
                                 style={(p) => ({
                                     width: '100%',
@@ -1348,14 +1385,7 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                     opacity: p.pressed ? 0.7 : 1,
                                 })}
                                 hitSlop={{ top: 5, bottom: 10, left: 0, right: 0 }}
-                                onPress={() => {
-                                    hapticsLight();
-                                    if (hasText) {
-                                        props.onSend();
-                                    } else {
-                                        props.onMicPress?.();
-                                    }
-                                }}
+                                onPress={handleSendWithRepeat}
                                 disabled={props.isSendDisabled || props.isSending || (!hasText && !props.onMicPress)}
                             >
                                 {props.isSending ? (
