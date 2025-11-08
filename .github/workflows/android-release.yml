@@ -72,7 +72,7 @@ jobs:
         run: |
           if [[ ! -f android/app/debug.keystore ]]; then
             pushd android/app >/dev/null
-            keytool -genkeypair \
+            "${JAVA_HOME}/bin/keytool" -genkeypair \
               -v \
               -noprompt \
               -storetype JKS \
