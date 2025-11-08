@@ -13,7 +13,7 @@ import { Metadata } from '@/sync/storageTypes';
 import { useRouter } from 'expo-router';
 import { PermissionFooter } from './PermissionFooter';
 import { parseToolUseError } from '@/utils/toolErrorParser';
-import { formatMCPTitle } from './views/MCPToolView';
+import { formatMCPTitle, parseMCPInfo } from './views/MCPToolView';
 import { t } from '@/text';
 
 interface ToolViewProps {
@@ -64,9 +64,16 @@ export const ToolView = React.memo<ToolViewProps>((props) => {
     
     // Special handling for MCP tools
     if (tool.name.startsWith('mcp__')) {
+        const mcpInfo = parseMCPInfo(tool.name);
         toolTitle = formatMCPTitle(tool.name);
         icon = <Ionicons name="extension-puzzle-outline" size={18} color={theme.colors.textSecondary} />;
-        minimal = true;
+        minimal = false;
+        if (!description) {
+            const segments = [mcpInfo.serverLabel, mcpInfo.commandLabel].filter(Boolean);
+            if (segments.length) {
+                description = segments.join(' • ');
+            }
+        }
     } else if (knownTool?.title) {
         if (typeof knownTool.title === 'function') {
             toolTitle = knownTool.title({ tool, metadata: props.metadata });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Share } from 'react-native';
 import { Text } from '@/components/StyledText';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Typography } from '@/constants/Typography';
@@ -11,6 +11,8 @@ import { ItemGroup } from '@/components/ItemGroup';
 import { Item } from '@/components/Item';
 import { useUnistyles } from 'react-native-unistyles';
 import { t } from '@/text';
+import * as Clipboard from 'expo-clipboard';
+import { Modal } from '@/modal';
 
 export default function TerminalScreen() {
     const router = useRouter();
@@ -27,24 +29,57 @@ export default function TerminalScreen() {
         } else {
             return null;
         }
-    }, [searchParams])
+    }, [searchParams]);
     const { processAuthUrl, isLoading } = useConnectTerminal({
         onSuccess: () => {
             router.back();
         }
     });
 
+    const authUrl = React.useMemo(() => {
+        if (!publicKey) {
+            return null;
+        }
+        return `happy://terminal?${publicKey}`;
+    }, [publicKey]);
+
     const handleConnect = async () => {
         if (publicKey) {
             // Use the full happy:// URL format expected by the hook
-            const authUrl = `happy://terminal?${publicKey}`;
-            await processAuthUrl(authUrl);
+            await processAuthUrl(`happy://terminal?${publicKey}`);
         }
     };
 
     const handleReject = () => {
         router.back();
     };
+
+    const handleCopyAuthUrl = React.useCallback(async () => {
+        if (!authUrl) {
+            return;
+        }
+        try {
+            await Clipboard.setStringAsync(authUrl);
+            Modal.alert(t('common.success'), t('connect.authUrlCopied'));
+        } catch (error) {
+            console.error('Failed to copy terminal URL', error);
+            Modal.alert(t('common.error'), t('connect.authUrlCopyFailed'));
+        }
+    }, [authUrl]);
+
+    const handleShareAuthUrl = React.useCallback(async () => {
+        if (!authUrl) {
+            return;
+        }
+        try {
+            await Share.share({
+                message: authUrl,
+            });
+        } catch (error) {
+            console.error('Failed to share terminal URL', error);
+            Modal.alert(t('common.error'), t('connect.shareAuthUrlFailed'));
+        }
+    }, [authUrl]);
 
     // Show error if no key found
     if (!publicKey) {
@@ -165,6 +200,72 @@ export default function TerminalScreen() {
                         />
                     </View>
                 </ItemGroup>
+
+                {/* Manual Link Export */}
+                {authUrl && (
+                    <ItemGroup>
+                        <View style={{
+                            paddingHorizontal: 16,
+                            paddingVertical: 16,
+                            gap: 12
+                        }}>
+                            <Text style={{
+                                ...Typography.default('semiBold'),
+                                fontSize: 16,
+                                color: theme.colors.text
+                            }}>
+                                {t('terminal.manualLinkTitle')}
+                            </Text>
+                            <Text style={{
+                                ...Typography.default(),
+                                fontSize: 14,
+                                color: theme.colors.textSecondary,
+                                lineHeight: 20
+                            }}>
+                                {t('terminal.manualLinkDescription')}
+                            </Text>
+                            <View style={{
+                                backgroundColor: theme.colors.input.background,
+                                borderRadius: 10,
+                                borderWidth: 1,
+                                borderColor: theme.colors.divider,
+                                padding: 12
+                            }}>
+                                <Text style={{
+                                    ...Typography.default('semiBold'),
+                                    fontSize: 12,
+                                    color: theme.colors.textSecondary,
+                                    marginBottom: 6
+                                }}>
+                                    {t('terminal.manualLinkLabel')}
+                                </Text>
+                                <Text selectable style={{
+                                    ...Typography.mono(),
+                                    fontSize: 13,
+                                    color: theme.colors.text,
+                                    lineHeight: 20
+                                }}>
+                                    {authUrl}
+                                </Text>
+                            </View>
+                            <View style={{ gap: 12 }}>
+                                <RoundButton
+                                    size="normal"
+                                    title={t('terminal.copyLink')}
+                                    onPress={handleCopyAuthUrl}
+                                    style={{ width: '100%' }}
+                                />
+                                <RoundButton
+                                    size="normal"
+                                    display="inverted"
+                                    title={t('terminal.shareLink')}
+                                    onPress={handleShareAuthUrl}
+                                    style={{ width: '100%' }}
+                                />
+                            </View>
+                        </View>
+                    </ItemGroup>
+                )}
 
                 {/* Security Notice */}
                 <ItemGroup

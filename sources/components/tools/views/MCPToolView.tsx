@@ -29,3 +29,21 @@ export function formatMCPTitle(toolName: string): string {
     // Fallback if format doesn't match expected pattern
     return `MCP: ${snakeToPascalWithSpaces(withoutPrefix)}`;
 }
+
+export function parseMCPInfo(toolName: string): {
+    serverRaw: string | null;
+    commandRaw: string | null;
+    serverLabel: string | null;
+    commandLabel: string | null;
+} {
+    const withoutPrefix = toolName.replace(/^mcp__/, '');
+    const parts = withoutPrefix.split('__');
+    const serverRaw = parts.length > 0 ? parts[0] : null;
+    const commandRaw = parts.length > 1 ? parts.slice(1).join('_') : null;
+    return {
+        serverRaw,
+        commandRaw,
+        serverLabel: serverRaw ? snakeToPascalWithSpaces(serverRaw) : null,
+        commandLabel: commandRaw ? snakeToPascalWithSpaces(commandRaw) : null,
+    };
+}

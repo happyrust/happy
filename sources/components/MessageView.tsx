@@ -1,5 +1,5 @@
 import * as React from "react";
-import { View, Text } from "react-native";
+import { View, Text, Pressable, Platform } from "react-native";
 import { StyleSheet } from 'react-native-unistyles';
 import { MarkdownView } from "./markdown/MarkdownView";
 import { t } from '@/text';
@@ -10,6 +10,8 @@ import { ToolView } from "./tools/ToolView";
 import { AgentEvent } from "@/sync/typesRaw";
 import { sync } from '@/sync/sync';
 import { Option } from './markdown/MarkdownView';
+import * as Clipboard from 'expo-clipboard';
+import { Modal } from '@/modal';
 
 export const MessageView = (props: {
   message: Message;
@@ -91,6 +93,31 @@ function AgentTextBlock(props: {
   const handleOptionPress = React.useCallback((option: Option) => {
     sync.sendMessage(props.sessionId, option.title);
   }, [props.sessionId]);
+  const handleLongPressCopy = React.useCallback(async () => {
+    try {
+      const text = props.message.text || '';
+      if (!text) {
+        Modal.alert(t('common.error'), t('textSelection.noTextToCopy'));
+        return;
+      }
+      await Clipboard.setStringAsync(text);
+      Modal.alert(t('common.copied'), t('textSelection.textCopied'));
+    } catch (error) {
+      Modal.alert(t('common.error'), t('textSelection.failedToCopy'));
+    }
+  }, [props.message.text]);
+
+  if (Platform.OS === 'android') {
+    return (
+      <Pressable
+        style={styles.agentMessageContainer}
+        onLongPress={handleLongPressCopy}
+        delayLongPress={400}
+      >
+        <MarkdownView markdown={props.message.text} onOptionPress={handleOptionPress} />
+      </Pressable>
+    );
+  }
 
   return (
     <View style={styles.agentMessageContainer}>

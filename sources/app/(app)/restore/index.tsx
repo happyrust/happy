@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, ScrollView, ActivityIndicator, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/auth/AuthContext';
 import { RoundButton } from '@/components/RoundButton';
@@ -12,6 +12,7 @@ import { Modal } from '@/modal';
 import { t } from '@/text';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { QRCode } from '@/components/qr/QRCode';
+import * as Clipboard from 'expo-clipboard';
 
 const stylesheet = StyleSheet.create((theme) => ({
     scrollView: {
@@ -60,6 +61,52 @@ const stylesheet = StyleSheet.create((theme) => ({
         textAlignVertical: 'top',
         color: theme.colors.input.text,
     },
+    manualLinkContainer: {
+        width: '100%',
+        marginTop: 24,
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: theme.colors.divider,
+        backgroundColor: theme.colors.surface,
+    },
+    manualLinkTitle: {
+        fontSize: 16,
+        color: theme.colors.text,
+        marginBottom: 4,
+        ...Typography.default('semiBold'),
+    },
+    manualLinkDescription: {
+        fontSize: 14,
+        color: theme.colors.textSecondary,
+        lineHeight: 20,
+        marginBottom: 12,
+        ...Typography.default(),
+    },
+    manualLinkBox: {
+        backgroundColor: theme.colors.input.background,
+        borderRadius: 10,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: theme.colors.divider,
+    },
+    manualLinkLabel: {
+        fontSize: 12,
+        color: theme.colors.textSecondary,
+        marginBottom: 6,
+        ...Typography.default('semiBold'),
+    },
+    manualLinkValue: {
+        fontFamily: 'IBMPlexMono-Regular',
+        fontSize: 13,
+        color: theme.colors.text,
+        lineHeight: 20,
+    },
+    manualLinkButtons: {
+        width: '100%',
+        marginTop: 16,
+        gap: 12,
+    },
 }));
 
 export default function Restore() {
@@ -75,6 +122,7 @@ export default function Restore() {
 
     // Memoize keypair generation to prevent re-creating on re-renders
     const keypair = React.useMemo(() => generateAuthKeyPair(), []);
+    const authUrl = React.useMemo(() => 'happy:///account?' + encodeBase64(keypair.publicKey, 'base64url'), [keypair]);
 
     // Start QR authentication when component mounts
     useEffect(() => {
@@ -131,6 +179,27 @@ export default function Restore() {
         };
     }, [keypair]);
 
+    const handleCopyAuthUrl = React.useCallback(async () => {
+        try {
+            await Clipboard.setStringAsync(authUrl);
+            Modal.alert(t('common.success'), t('connect.authUrlCopied'));
+        } catch (error) {
+            console.error('Failed to copy auth URL', error);
+            Modal.alert(t('common.error'), t('connect.authUrlCopyFailed'));
+        }
+    }, [authUrl]);
+
+    const handleShareAuthUrl = React.useCallback(async () => {
+        try {
+            await Share.share({
+                message: authUrl,
+            });
+        } catch (error) {
+            console.error('Failed to share auth URL', error);
+            Modal.alert(t('common.error'), t('connect.shareAuthUrlFailed'));
+        }
+    }, [authUrl]);
+
     return (
         <ScrollView style={styles.scrollView} contentContainerStyle={{ flexGrow: 1 }}>
             <View style={styles.container}>
@@ -149,12 +218,46 @@ export default function Restore() {
                     </View>
                 )}
                 {authReady && (
-                    <QRCode
-                        data={'happy:///account?' + encodeBase64(keypair.publicKey, 'base64url')}
-                        size={300}
-                        foregroundColor={'black'}
-                        backgroundColor={'white'}
-                    />
+                    <>
+                        <QRCode
+                            data={authUrl}
+                            size={300}
+                            foregroundColor={'black'}
+                            backgroundColor={'white'}
+                        />
+
+                        <View style={styles.manualLinkContainer}>
+                            <Text style={styles.manualLinkTitle}>
+                                {t('connect.authUrlHelpTitle')}
+                            </Text>
+                            <Text style={styles.manualLinkDescription}>
+                                {t('connect.authUrlHelpDescription')}
+                            </Text>
+                            <View style={styles.manualLinkBox}>
+                                <Text style={styles.manualLinkLabel}>
+                                    {t('connect.authUrlLabel')}
+                                </Text>
+                                <Text selectable style={styles.manualLinkValue}>
+                                    {authUrl}
+                                </Text>
+                            </View>
+                            <View style={styles.manualLinkButtons}>
+                                <RoundButton
+                                    size="normal"
+                                    title={t('connect.copyAuthUrl')}
+                                    onPress={handleCopyAuthUrl}
+                                    style={{ width: '100%' }}
+                                />
+                                <RoundButton
+                                    size="normal"
+                                    display="inverted"
+                                    title={t('connect.shareAuthUrl')}
+                                    onPress={handleShareAuthUrl}
+                                    style={{ width: '100%' }}
+                                />
+                            </View>
+                        </View>
+                    </>
                 )}
                 <View style={{ flexGrow: 4, paddingTop: 30 }}>
                     <RoundButton title="Restore with Secret Key Instead" display='inverted' onPress={() => {
