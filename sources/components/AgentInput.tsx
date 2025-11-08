@@ -32,6 +32,7 @@ interface AgentInputProps {
     onChangeText: (text: string) => void;
     sessionId?: string;
     onSend: () => void;
+    onSendMultiple?: (times: number, message: string) => void;
     sendIcon?: React.ReactNode;
     onMicPress?: () => void;
     isMicActive?: boolean;
@@ -315,6 +316,9 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
     // Template picker state
     const [showTemplatePicker, setShowTemplatePicker] = React.useState(false);
     
+    // Repeat times state (for template picker)
+    const [repeatTimes, setRepeatTimes] = React.useState(1);
+    
     // Handler to save current message as template
     const handleSaveAsTemplate = React.useCallback(async () => {
         if (!hasText) return;
@@ -573,6 +577,100 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                             { paddingHorizontal: screenWidth > 700 ? 0 : 8 }
                         ]}>
                             <FloatingOverlay maxHeight={400} keyboardShouldPersistTaps="handled">
+                                {/* Repeat times selector */}
+                                <View style={styles.overlaySection}>
+                                    <Text style={styles.overlaySectionTitle}>
+                                        {t('agentInput.repeatSendMenuTitle')}
+                                    </Text>
+                                    <View style={{ 
+                                        flexDirection: 'row', 
+                                        paddingHorizontal: 16, 
+                                        paddingVertical: 8,
+                                        gap: 8,
+                                        flexWrap: 'wrap',
+                                    }}>
+                                        {[1, 3, 5, 10].map((times) => (
+                                            <Pressable
+                                                key={times}
+                                                onPress={() => {
+                                                    hapticsLight();
+                                                    setRepeatTimes(times);
+                                                }}
+                                                style={({ pressed }) => ({
+                                                    paddingHorizontal: 16,
+                                                    paddingVertical: 8,
+                                                    borderRadius: 16,
+                                                    backgroundColor: repeatTimes === times
+                                                        ? '#007AFF'
+                                                        : pressed
+                                                            ? theme.colors.surfacePressed
+                                                            : theme.colors.surface,
+                                                    borderWidth: 1,
+                                                    borderColor: repeatTimes === times ? '#007AFF' : theme.colors.separator,
+                                                })}
+                                            >
+                                                <Text style={{
+                                                    fontSize: 14,
+                                                    fontWeight: '600',
+                                                    color: repeatTimes === times ? '#FFFFFF' : theme.colors.text,
+                                                    ...Typography.default('semiBold')
+                                                }}>
+                                                    {times === 1 ? t('agentInput.repeatSendOnce') : t('agentInput.repeatSendTimes', { times })}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
+                                        <Pressable
+                                            onPress={async () => {
+                                                const result = await Modal.prompt(
+                                                    t('agentInput.customRepeatTitle'),
+                                                    t('agentInput.customRepeatMessage'),
+                                                    {
+                                                        cancelText: t('common.cancel'),
+                                                        confirmText: t('common.confirm'),
+                                                        placeholder: t('agentInput.customRepeatPlaceholder'),
+                                                        inputType: 'numeric',
+                                                        defaultValue: String(repeatTimes),
+                                                    }
+                                                );
+                                                
+                                                if (result === null) return;
+                                                
+                                                const trimmed = result.trim();
+                                                const numericValue = Number(trimmed);
+                                                
+                                                if (!Number.isFinite(numericValue) || !Number.isInteger(numericValue) || numericValue <= 0) {
+                                                    Modal.alert(t('common.error'), t('agentInput.customRepeatInvalid'));
+                                                    return;
+                                                }
+                                                
+                                                hapticsLight();
+                                                setRepeatTimes(numericValue);
+                                            }}
+                                            style={({ pressed }) => ({
+                                                paddingHorizontal: 16,
+                                                paddingVertical: 8,
+                                                borderRadius: 16,
+                                                backgroundColor: pressed
+                                                    ? theme.colors.surfacePressed
+                                                    : theme.colors.surface,
+                                                borderWidth: 1,
+                                                borderColor: theme.colors.separator,
+                                            })}
+                                        >
+                                            <Text style={{
+                                                fontSize: 14,
+                                                fontWeight: '600',
+                                                color: theme.colors.text,
+                                                ...Typography.default('semiBold')
+                                            }}>
+                                                {repeatTimes > 10 ? t('agentInput.repeatSendTimes', { times: repeatTimes }) : t('agentInput.customRepeatOption')}
+                                            </Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+                                
+                                <View style={styles.overlayDivider} />
+                                
                                 {/* Actions for current message */}
                                 {hasText && props.sessionId && (
                                     <>
@@ -660,8 +758,16 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                                 key={template.id}
                                                 onPress={() => {
                                                     hapticsLight();
-                                                    props.onChangeText(template.content);
+                                                    if (props.onSendMultiple) {
+                                                        // Send template content N times
+                                                        props.onSendMultiple(repeatTimes, template.content);
+                                                    } else {
+                                                        // Fallback: just fill input
+                                                        props.onChangeText(template.content);
+                                                    }
                                                     setShowTemplatePicker(false);
+                                                    // Reset repeat times to default
+                                                    setRepeatTimes(1);
                                                 }}
                                                 style={({ pressed }) => ({
                                                     paddingHorizontal: 16,

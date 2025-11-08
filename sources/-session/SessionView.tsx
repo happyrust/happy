@@ -223,6 +223,94 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
         setAutoModeEnabledState(enabled);
     }, [sessionId]);
 
+    // Repeat send state tracking
+    const repeatSendStateRef = React.useRef<{
+        active: boolean;
+        message: string;
+        totalTimes: number;
+        sentCount: number;
+        lastSentAt: number;
+    } | null>(null);
+    
+    // Function to initiate repeat send
+    const handleSendMultiple = React.useCallback((times: number, messageText: string) => {
+        if (!messageText.trim()) return;
+        
+        // Initialize repeat send state
+        repeatSendStateRef.current = {
+            active: true,
+            message: messageText,
+            totalTimes: times,
+            sentCount: 0,
+            lastSentAt: 0,
+        };
+        
+        // Send the first message immediately
+        sync.sendMessage(sessionId, messageText);
+        trackMessageSent();
+        repeatSendStateRef.current.sentCount = 1;
+        repeatSendStateRef.current.lastSentAt = Date.now();
+        
+        // If only sending once, we're done
+        if (times === 1) {
+            repeatSendStateRef.current = null;
+        }
+    }, [sessionId]);
+
+    // Monitor session state for repeat send continuation
+    const prevSessionStateRef = React.useRef<string | null>(null);
+    React.useEffect(() => {
+        if (!session) {
+            prevSessionStateRef.current = null;
+            return;
+        }
+        
+        const currentState = sessionStatus.state;
+        const prevState = prevSessionStateRef.current;
+        
+        // Check if we have an active repeat send
+        const repeatState = repeatSendStateRef.current;
+        if (!repeatState || !repeatState.active) {
+            prevSessionStateRef.current = currentState;
+            return;
+        }
+        
+        // Detect transition from 'thinking' to 'waiting' (AI finished responding)
+        if (prevState === 'thinking' && currentState === 'waiting') {
+            // Check if session is still online
+            if (sessionStatus.isConnected && session.presence === 'online') {
+                // Check if we need to send more messages
+                if (repeatState.sentCount < repeatState.totalTimes) {
+                    // Wait a bit to ensure all tool calls are complete
+                    setTimeout(() => {
+                        const currentRepeatState = repeatSendStateRef.current;
+                        if (!currentRepeatState || !currentRepeatState.active) return;
+                        
+                        // Double-check session is still ready
+                        const currentSession = storage.getState().sessions[sessionId];
+                        if (!currentSession || currentSession.thinking || currentSession.presence !== 'online') return;
+                        
+                        // Send next message
+                        sync.sendMessage(sessionId, currentRepeatState.message);
+                        trackMessageSent();
+                        currentRepeatState.sentCount += 1;
+                        currentRepeatState.lastSentAt = Date.now();
+                        
+                        // Check if we're done
+                        if (currentRepeatState.sentCount >= currentRepeatState.totalTimes) {
+                            repeatSendStateRef.current = null;
+                        }
+                    }, 500);
+                }
+            } else {
+                // Connection lost, cancel repeat send
+                repeatSendStateRef.current = null;
+            }
+        }
+        
+        prevSessionStateRef.current = currentState;
+    }, [session, sessionStatus.state, sessionStatus.isConnected, session?.presence, sessionId]);
+
     // Memoize header-dependent styles to prevent re-renders
     const headerDependentStyles = React.useMemo(() => ({
         contentContainer: {
@@ -327,6 +415,7 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
                     trackMessageSent();
                 }
             }}
+            onSendMultiple={handleSendMultiple}
             onMicPress={micButtonState.onMicPress}
             isMicActive={micButtonState.isMicActive}
             onAbort={() => sessionAbort(sessionId)}

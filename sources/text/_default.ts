@@ -92,6 +92,14 @@ export const en = {
         enterSecretKey: 'Please enter a secret key',
         invalidSecretKey: 'Invalid secret key. Please check and try again.',
         enterUrlManually: 'Enter URL manually',
+        authUrlHelpTitle: "Can't scan the QR code?",
+        authUrlHelpDescription: 'Copy or share this authentication URL and open it on a linked device.',
+        authUrlLabel: 'Authentication URL',
+        copyAuthUrl: 'Copy URL',
+        shareAuthUrl: 'Share URL',
+        authUrlCopied: 'Authentication URL copied to clipboard',
+        authUrlCopyFailed: 'Failed to copy authentication URL',
+        shareAuthUrlFailed: 'Unable to share authentication URL',
     },
 
     settings: {
@@ -472,6 +480,15 @@ export const en = {
         enterTemplateName: 'Enter template name',
         templateNamePlaceholder: 'e.g., Continue working',
         templates: 'Templates',
+        repeatSend: 'Repeat Send',
+        repeatSendOnce: 'Send once',
+        repeatSendTimes: ({ times }: { times: number }) => `Send ${times} times`,
+        repeatSendMenuTitle: 'Select repeat times',
+        customRepeatOption: 'Custom times...',
+        customRepeatTitle: 'Custom repeat times',
+        customRepeatMessage: 'Enter the number of times to send this message',
+        customRepeatPlaceholder: 'e.g., 20',
+        customRepeatInvalid: 'Please enter a positive whole number',
         permissionMode: {
             title: 'PERMISSION MODE',
             default: 'Default',
@@ -726,6 +743,11 @@ export const en = {
         clientSideProcessing: 'Client-Side Processing',
         linkProcessedLocally: 'Link processed locally in browser',
         linkProcessedOnDevice: 'Link processed locally on device',
+        manualLinkTitle: 'Need to use this link elsewhere?',
+        manualLinkDescription: 'Copy or share the terminal authentication URL to open it on another device.',
+        manualLinkLabel: 'Terminal URL',
+        copyLink: 'Copy URL',
+        shareLink: 'Share URL',
     },
 
     modals: {

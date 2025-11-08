@@ -94,6 +94,14 @@ export const zhHans: TranslationStructure = {
         enterSecretKey: '请输入密钥',
         invalidSecretKey: '无效的密钥，请检查后重试。',
         enterUrlManually: '手动输入 URL',
+        authUrlHelpTitle: '无法扫描二维码？',
+        authUrlHelpDescription: '复制或分享此认证链接，并在已登录的设备上打开。',
+        authUrlLabel: '认证链接',
+        copyAuthUrl: '复制链接',
+        shareAuthUrl: '分享链接',
+        authUrlCopied: '认证链接已复制到剪贴板',
+        authUrlCopyFailed: '复制认证链接失败',
+        shareAuthUrlFailed: '无法分享认证链接',
     },
 
     settings: {
@@ -474,6 +482,15 @@ export const zhHans: TranslationStructure = {
         enterTemplateName: '输入模板名称',
         templateNamePlaceholder: '例如：继续工作',
         templates: '模板',
+        repeatSend: '重复发送',
+        repeatSendOnce: '发送1次',
+        repeatSendTimes: ({ times }: { times: number }) => `发送${times}次`,
+        repeatSendMenuTitle: '选择重复次数',
+        customRepeatOption: '自定义次数...',
+        customRepeatTitle: '自定义重复次数',
+        customRepeatMessage: '输入要发送此消息的次数',
+        customRepeatPlaceholder: '例如：20',
+        customRepeatInvalid: '请输入正整数',
         permissionMode: {
             title: '权限模式',
             default: '默认',
@@ -728,6 +745,11 @@ export const zhHans: TranslationStructure = {
         clientSideProcessing: '客户端处理',
         linkProcessedLocally: '链接在浏览器中本地处理',
         linkProcessedOnDevice: '链接在设备上本地处理',
+        manualLinkTitle: '需要在其他设备上使用此链接？',
+        manualLinkDescription: '复制或分享终端认证链接，以便在其它设备上打开。',
+        manualLinkLabel: '终端链接',
+        copyLink: '复制链接',
+        shareLink: '分享链接',
     },
 
     modals: {
