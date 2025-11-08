@@ -5,6 +5,7 @@ import { useLocalSetting, storage, useSessionMessages } from '@/sync/storage';
 import { sync } from '@/sync/sync';
 import { SessionState } from '@/utils/sessionUtils';
 import { Message } from '@/sync/typesMessage';
+import { isAutoModeEnabledForSession, getAutoSendMessage } from '@/utils/autoModeUtils';
 
 /**
  * Check if a session has any active operations that should prevent auto-reply:
@@ -48,18 +49,17 @@ function hasActiveOperations(session: Session | null, messages: Message[]): bool
 export function useAutoMode(sessionId: string, session: Session | null) {
     const sessionStatus = session ? useSessionStatus(session) : null;
     const { messages } = useSessionMessages(sessionId);
-    const autoModeEnabled = useLocalSetting('autoModeEnabled');
     const autoModeTemplates = useLocalSetting('autoModeTemplates');
     const autoModeSelectedTemplateId = useLocalSetting('autoModeSelectedTemplateId');
-    const autoModeSessionEnabled = useLocalSetting('autoModeSessionEnabled');
     const autoModeMaxCycles = useLocalSetting('autoModeMaxCycles');
     const autoModeCycleCount = useLocalSetting('autoModeCycleCount');
+    const autoModeSessionMaxCycles = useLocalSetting('autoModeSessionMaxCycles');
     
     // Track previous state to detect transitions
     const prevStateRef = useRef<SessionState | null>(null);
     const hasSentRef = useRef(false); // Prevent sending multiple times for the same transition
     const lastThinkingStateRef = useRef<number>(0); // Track when thinking state started
-    const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Track pending checks
+    const checkTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null); // Track pending checks
     
     useEffect(() => {
         // Cleanup timeout on unmount or when dependencies change
@@ -86,8 +86,8 @@ export function useAutoMode(sessionId: string, session: Session | null) {
         const currentState = sessionStatus.state;
         const prevState = prevStateRef.current;
         
-        // Check if auto mode is enabled for this session
-        const isSessionAutoModeEnabled = autoModeSessionEnabled[sessionId] ?? autoModeEnabled;
+        // Check if auto mode is enabled for this session (uses session override or defaults to false)
+        const isSessionAutoModeEnabled = isAutoModeEnabledForSession(sessionId);
         
         // Only proceed if auto mode is enabled
         if (!isSessionAutoModeEnabled) {
@@ -99,12 +99,10 @@ export function useAutoMode(sessionId: string, session: Session | null) {
             return;
         }
         
-        // Check if we have a selected template
-        const selectedTemplate = autoModeTemplates.find(
-            t => t.id === autoModeSelectedTemplateId
-        );
+        // Get the auto-send message (custom message or selected template)
+        const messageToSend = getAutoSendMessage(sessionId);
         
-        if (!selectedTemplate) {
+        if (!messageToSend) {
             prevStateRef.current = currentState;
             hasSentRef.current = false;
             if (currentState !== 'thinking') {
@@ -114,8 +112,10 @@ export function useAutoMode(sessionId: string, session: Session | null) {
         }
         
         // Check cycle count limit
+        const sessionMaxCycles = autoModeSessionMaxCycles[sessionId];
+        const effectiveMaxCycles = sessionMaxCycles ?? autoModeMaxCycles;
         const currentCycleCount = autoModeCycleCount[sessionId] || 0;
-        if (autoModeMaxCycles > 0 && currentCycleCount >= autoModeMaxCycles) {
+        if (effectiveMaxCycles > 0 && currentCycleCount >= effectiveMaxCycles) {
             // Cycle limit reached, don't send
             prevStateRef.current = currentState;
             hasSentRef.current = false;
@@ -173,8 +173,7 @@ export function useAutoMode(sessionId: string, session: Session | null) {
                     }
                     
                     // All checks passed - safe to send auto-reply
-                    const templateToSend = selectedTemplate.content;
-                    sync.sendMessage(sessionId, templateToSend);
+                    sync.sendMessage(sessionId, messageToSend);
                     hasSentRef.current = true;
                     
                     // Increment cycle count
@@ -210,12 +209,10 @@ export function useAutoMode(sessionId: string, session: Session | null) {
         session?.agentState,
         messages,
         sessionId,
-        autoModeEnabled,
         autoModeTemplates,
         autoModeSelectedTemplateId,
-        autoModeSessionEnabled,
         autoModeMaxCycles,
         autoModeCycleCount,
+        autoModeSessionMaxCycles,
     ]);
 }
-

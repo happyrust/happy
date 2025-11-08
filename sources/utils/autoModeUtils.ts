@@ -85,11 +85,42 @@ export function toggleAutoModeForSession(sessionId: string, enabled: boolean): v
 }
 
 /**
- * Get auto mode enabled state for a session (checks both global and session-specific)
+ * Set per-session max cycles override
+ */
+export function setSessionAutoModeMaxCycles(sessionId: string, maxCycles: number): void {
+    const sessionMaxCycles = storage.getState().localSettings.autoModeSessionMaxCycles;
+    storage.getState().applyLocalSettings({
+        autoModeSessionMaxCycles: {
+            ...sessionMaxCycles,
+            [sessionId]: maxCycles,
+        },
+    });
+}
+
+/**
+ * Clear per-session max cycles override
+ */
+export function clearSessionAutoModeMaxCycles(sessionId: string): void {
+    const sessionMaxCycles = storage.getState().localSettings.autoModeSessionMaxCycles;
+    const updated = { ...sessionMaxCycles };
+    delete updated[sessionId];
+    storage.getState().applyLocalSettings({
+        autoModeSessionMaxCycles: updated,
+    });
+}
+
+/**
+ * Get auto mode enabled state for a session.
+ * Session-specific setting overrides global setting.
+ * If session has no explicit setting, defaults to false (disabled).
  */
 export function isAutoModeEnabledForSession(sessionId: string): boolean {
     const localSettings = storage.getState().localSettings;
-    return localSettings.autoModeSessionEnabled[sessionId] ?? localSettings.autoModeEnabled;
+    // If session has explicit setting, use it; otherwise default to false
+    if (sessionId in localSettings.autoModeSessionEnabled) {
+        return localSettings.autoModeSessionEnabled[sessionId];
+    }
+    return false;
 }
 
 /**
@@ -112,4 +143,57 @@ export function clearSessionAutoModeOverride(sessionId: string): void {
     });
 }
 
+/**
+ * Set custom message for a session (overrides template selection)
+ */
+export function setSessionCustomMessage(sessionId: string, message: string): void {
+    const customMessages = storage.getState().localSettings.autoModeCustomMessage;
+    storage.getState().applyLocalSettings({
+        autoModeCustomMessage: {
+            ...customMessages,
+            [sessionId]: message,
+        },
+    });
+}
+
+/**
+ * Clear custom message for a session (revert to using templates)
+ */
+export function clearSessionCustomMessage(sessionId: string): void {
+    const customMessages = storage.getState().localSettings.autoModeCustomMessage;
+    const updated = { ...customMessages };
+    delete updated[sessionId];
+    storage.getState().applyLocalSettings({
+        autoModeCustomMessage: updated,
+    });
+}
+
+/**
+ * Get the auto-send message for a session.
+ * Priority: Custom message > Selected template > null
+ */
+export function getAutoSendMessage(sessionId: string): string | null {
+    const localSettings = storage.getState().localSettings;
+    
+    // Check for custom message first
+    const customMessage = localSettings.autoModeCustomMessage[sessionId];
+    if (customMessage) {
+        return customMessage;
+    }
+    
+    // Fall back to selected template
+    const selectedTemplate = localSettings.autoModeTemplates.find(
+        t => t.id === localSettings.autoModeSelectedTemplateId
+    );
+    
+    return selectedTemplate?.content || null;
+}
+
+/**
+ * Check if a session has a custom message set
+ */
+export function hasSessionCustomMessage(sessionId: string): boolean {
+    const localSettings = storage.getState().localSettings;
+    return sessionId in localSettings.autoModeCustomMessage;
+}
 

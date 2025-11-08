@@ -65,7 +65,7 @@ export default function AutoModeSettingsScreen() {
 
     const handleAddTemplate = () => {
         if (!newTemplateName.trim() || !newTemplateContent.trim()) {
-            Modal.alert(t('common.error'), 'Template name and content are required');
+            Modal.alert(t('common.error'), t('settingsAutoMode.templateNameRequired'));
             return;
         }
         addAutoModeTemplate({
@@ -84,7 +84,7 @@ export default function AutoModeSettingsScreen() {
 
     const handleSaveEdit = () => {
         if (!editingTemplate || !newTemplateName.trim() || !newTemplateContent.trim()) {
-            Modal.alert(t('common.error'), 'Template name and content are required');
+            Modal.alert(t('common.error'), t('settingsAutoMode.templateNameRequired'));
             return;
         }
         updateAutoModeTemplate(editingTemplate.id, {
@@ -98,11 +98,11 @@ export default function AutoModeSettingsScreen() {
 
     const handleDeleteTemplate = async (templateId: string) => {
         const confirmed = await Modal.confirm(
-            'Delete Template',
-            'Are you sure you want to delete this template?',
+            t('settingsAutoMode.deleteTemplate'),
+            t('settingsAutoMode.deleteTemplateMessage'),
             {
-                cancelText: 'Cancel',
-                confirmText: 'Delete',
+                cancelText: t('settingsAutoMode.cancel'),
+                confirmText: t('settingsAutoMode.delete'),
                 destructive: true,
             }
         );
@@ -120,12 +120,12 @@ export default function AutoModeSettingsScreen() {
             <ItemList style={{ paddingTop: 0 }}>
                 {/* Auto Mode Toggle */}
                 <ItemGroup 
-                    title="Auto Mode"
-                    footer="When enabled, automatically sends the selected template message when AI finishes responding."
+                    title={t('settingsAutoMode.autoModeGroup')}
+                    footer={t('settingsAutoMode.autoModeFooter')}
                 >
                     <Item
-                        title="Enable Auto Mode"
-                        subtitle={autoModeEnabled ? "Auto mode is enabled" : "Auto mode is disabled"}
+                        title={t('settingsAutoMode.enableAutoMode')}
+                        subtitle={autoModeEnabled ? t('settingsAutoMode.autoModeIsEnabled') : t('settingsAutoMode.autoModeIsDisabled')}
                         icon={<Ionicons name="play-circle-outline" size={29} color="#34C759" />}
                         rightElement={
                             <Switch
@@ -140,10 +140,10 @@ export default function AutoModeSettingsScreen() {
                 {/* Cycle Settings */}
                 {autoModeEnabled && (
                     <ItemGroup 
-                        title="Cycle Settings"
+                        title={t('settingsAutoMode.cycleSettings')}
                         footer={autoModeMaxCycles === 0 
-                            ? "Unlimited cycles - will continue automatically until manually disabled"
-                            : `Maximum ${autoModeMaxCycles} cycle${autoModeMaxCycles === 1 ? '' : 's'}. After reaching the limit, auto mode will stop for this session.`
+                            ? t('settingsAutoMode.cycleSettingsFooterUnlimited')
+                            : t('settingsAutoMode.cycleSettingsFooterLimited', { count: autoModeMaxCycles })
                         }
                     >
                         <View style={{ padding: 16 }}>
@@ -153,7 +153,7 @@ export default function AutoModeSettingsScreen() {
                                 color: theme.colors.text,
                                 marginBottom: 8 
                             }}>
-                                Maximum Cycles (0 = unlimited)
+                                {t('settingsAutoMode.maximumCycles')}
                             </Text>
                             <TextInput
                                 style={{
@@ -166,7 +166,7 @@ export default function AutoModeSettingsScreen() {
                                     borderColor: theme.colors.input.border,
                                     marginBottom: 8,
                                 }}
-                                placeholder="Enter number (0 for unlimited)"
+                                placeholder={t('settingsAutoMode.enterNumber')}
                                 placeholderTextColor={theme.colors.textSecondary}
                                 value={maxCyclesInput}
                                 onChangeText={handleMaxCyclesChange}
@@ -178,8 +178,8 @@ export default function AutoModeSettingsScreen() {
                                 marginBottom: 16 
                             }}>
                                 {autoModeMaxCycles === 0 
-                                    ? "Unlimited cycles"
-                                    : `Maximum ${autoModeMaxCycles} cycle${autoModeMaxCycles === 1 ? '' : 's'}`
+                                    ? t('settingsAutoMode.unlimitedCycles')
+                                    : t('settingsAutoMode.maximumCyclesCount', { count: autoModeMaxCycles })
                                 }
                             </Text>
                             
@@ -191,7 +191,7 @@ export default function AutoModeSettingsScreen() {
                                         color: theme.colors.text,
                                         marginBottom: 8 
                                     }}>
-                                        Current Cycle Counts
+                                        {t('settingsAutoMode.currentCycleCounts')}
                                     </Text>
                                     {Object.entries(autoModeCycleCount).map(([sessionId, count]) => (
                                         <View key={sessionId} style={{
@@ -210,24 +210,24 @@ export default function AutoModeSettingsScreen() {
                                                     color: theme.colors.text,
                                                     fontWeight: '500'
                                                 }}>
-                                                    Session: {sessionId.substring(0, 8)}...
+                                                    {t('settingsAutoMode.sessionLabel', { id: sessionId })}
                                                 </Text>
                                                 <Text style={{ 
                                                     fontSize: 12, 
                                                     color: theme.colors.textSecondary,
                                                     marginTop: 2
                                                 }}>
-                                                    {count} / {autoModeMaxCycles === 0 ? '∞' : autoModeMaxCycles}
+                                                    {t('settingsAutoMode.cycleProgress', { current: count, max: autoModeMaxCycles === 0 ? '∞' : String(autoModeMaxCycles) })}
                                                 </Text>
                                             </View>
                                             <Pressable
                                                 onPress={async () => {
                                                     const confirmed = await Modal.confirm(
-                                                        'Reset Cycle Count',
-                                                        'Reset cycle count for this session?',
+                                                        t('settingsAutoMode.resetCycleCount'),
+                                                        t('settingsAutoMode.resetCycleCountMessage'),
                                                         {
-                                                            cancelText: 'Cancel',
-                                                            confirmText: 'Reset',
+                                                            cancelText: t('settingsAutoMode.cancel'),
+                                                            confirmText: t('common.reset'),
                                                         }
                                                     );
                                                     if (confirmed) {
@@ -243,11 +243,11 @@ export default function AutoModeSettingsScreen() {
                                     <Pressable
                                         onPress={async () => {
                                             const confirmed = await Modal.confirm(
-                                                'Reset All Cycle Counts',
-                                                'Reset cycle counts for all sessions?',
+                                                t('settingsAutoMode.resetAllCycleCounts'),
+                                                t('settingsAutoMode.resetAllCycleCountsMessage'),
                                                 {
-                                                    cancelText: 'Cancel',
-                                                    confirmText: 'Reset All',
+                                                    cancelText: t('settingsAutoMode.cancel'),
+                                                    confirmText: t('settingsAutoMode.resetAll'),
                                                     destructive: true,
                                                 }
                                             );
@@ -264,7 +264,7 @@ export default function AutoModeSettingsScreen() {
                                         }}
                                     >
                                         <Text style={{ color: theme.colors.button.secondaryText, fontWeight: '600' }}>
-                                            Reset All Cycle Counts
+                                            {t('settingsAutoMode.resetAllCycleCounts')}
                                         </Text>
                                     </Pressable>
                                 </>
@@ -276,10 +276,10 @@ export default function AutoModeSettingsScreen() {
                 {/* Selected Template */}
                 {autoModeEnabled && (
                     <ItemGroup 
-                        title="Selected Template"
+                        title={t('settingsAutoMode.selectedTemplate')}
                         footer={selectedTemplate 
-                            ? `Current template: "${selectedTemplate.name}"`
-                            : "No template selected. Add a template below to get started."
+                            ? t('settingsAutoMode.selectedTemplateFooter', { name: selectedTemplate.name })
+                            : t('settingsAutoMode.noTemplateSelected')
                         }
                     >
                         {selectedTemplate ? (
@@ -293,8 +293,8 @@ export default function AutoModeSettingsScreen() {
                             />
                         ) : (
                             <Item
-                                title="No template selected"
-                                subtitle="Select a template from the list below"
+                                title={t('settingsAutoMode.noTemplateTitle')}
+                                subtitle={t('settingsAutoMode.selectTemplateSubtitle')}
                                 icon={<Ionicons name="document-outline" size={29} color="#8E8E93" />}
                                 showChevron={false}
                             />
@@ -304,13 +304,13 @@ export default function AutoModeSettingsScreen() {
 
                 {/* Templates List */}
                 <ItemGroup 
-                    title="Templates"
-                    footer="Templates are automatically sent when AI finishes responding (if auto mode is enabled)."
+                    title={t('settingsAutoMode.templates')}
+                    footer={t('settingsAutoMode.templatesFooter')}
                 >
                     {autoModeTemplates.length === 0 ? (
                         <Item
-                            title="No templates"
-                            subtitle="Add your first template below"
+                            title={t('settingsAutoMode.noTemplates')}
+                            subtitle={t('settingsAutoMode.addFirstTemplate')}
                             icon={<Ionicons name="add-circle-outline" size={29} color="#8E8E93" />}
                             showChevron={false}
                         />
@@ -353,7 +353,7 @@ export default function AutoModeSettingsScreen() {
                 </ItemGroup>
 
                 {/* Add/Edit Template */}
-                <ItemGroup title={editingTemplate ? "Edit Template" : "Add Template"}>
+                <ItemGroup title={t('settingsAutoMode.addEditTemplate', { isEditing: !!editingTemplate })}>
                     <View style={{ padding: 16 }}>
                         <Text style={{ 
                             fontSize: 17, 
@@ -361,7 +361,7 @@ export default function AutoModeSettingsScreen() {
                             color: theme.colors.text,
                             marginBottom: 8 
                         }}>
-                            Template Name
+                            {t('settingsAutoMode.templateName')}
                         </Text>
                         <TextInput
                             style={{
@@ -374,7 +374,7 @@ export default function AutoModeSettingsScreen() {
                                 borderColor: theme.colors.input.border,
                                 marginBottom: 16,
                             }}
-                            placeholder="Enter template name"
+                            placeholder={t('settingsAutoMode.enterTemplateName')}
                             placeholderTextColor={theme.colors.textSecondary}
                             value={newTemplateName}
                             onChangeText={setNewTemplateName}
@@ -385,7 +385,7 @@ export default function AutoModeSettingsScreen() {
                             color: theme.colors.text,
                             marginBottom: 8 
                         }}>
-                            Template Content
+                            {t('settingsAutoMode.templateContent')}
                         </Text>
                         <TextInput
                             style={{
@@ -400,7 +400,7 @@ export default function AutoModeSettingsScreen() {
                                 textAlignVertical: 'top',
                                 marginBottom: 16,
                             }}
-                            placeholder="Enter template content (this will be sent automatically)"
+                            placeholder={t('settingsAutoMode.enterTemplateContent')}
                             placeholderTextColor={theme.colors.textSecondary}
                             value={newTemplateContent}
                             onChangeText={setNewTemplateContent}
@@ -423,7 +423,7 @@ export default function AutoModeSettingsScreen() {
                                     }}
                                 >
                                     <Text style={{ color: theme.colors.button.secondaryText, fontWeight: '600' }}>
-                                        Cancel
+                                        {t('settingsAutoMode.cancel')}
                                     </Text>
                                 </Pressable>
                             )}
@@ -438,7 +438,7 @@ export default function AutoModeSettingsScreen() {
                                 }}
                             >
                                 <Text style={{ color: theme.colors.button.primaryText, fontWeight: '600' }}>
-                                    {editingTemplate ? 'Save' : 'Add Template'}
+                                    {editingTemplate ? t('settingsAutoMode.save') : t('settingsAutoMode.addTemplate')}
                                 </Text>
                             </Pressable>
                         </View>

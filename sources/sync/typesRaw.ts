@@ -193,9 +193,9 @@ export type NormalizedMessage = ({
 export function normalizeRawMessage(id: string, localId: string | null, createdAt: number, raw: RawRecord): NormalizedMessage | null {
     let parsed = rawRecordSchema.safeParse(raw);
     if (!parsed.success) {
-        console.error('Invalid raw record:');
-        console.error(parsed.error.issues);
-        console.error(raw);
+        console.error('❌ Invalid raw record - Validation failed:');
+        console.error('Error issues:', JSON.stringify(parsed.error.issues, null, 2));
+        console.error('Raw data:', JSON.stringify(raw, null, 2));
         return null;
     }
     raw = parsed.data;

@@ -25,6 +25,8 @@ export const LocalSettingsSchema = z.object({
     // Per-session auto mode settings - keyed by sessionId
     autoModeSessionEnabled: z.record(z.string(), z.boolean()).describe('Per-session auto mode enable state'),
     autoModeCycleCount: z.record(z.string(), z.number()).describe('Per-session cycle count for auto mode'),
+    autoModeSessionMaxCycles: z.record(z.string(), z.number()).describe('Per-session max cycle overrides for auto mode'),
+    autoModeCustomMessage: z.record(z.string(), z.string()).describe('Per-session custom messages for auto mode (overrides templates)'),
 });
 
 //
@@ -54,11 +56,23 @@ export const localSettingsDefaults: LocalSettings = {
             name: '提交并继续',
             content: '提交当前代码，更新Changelog, 然后继续执行你的建议',
         },
+        {
+            id: 'default_template_2',
+            name: '继续完善',
+            content: '继续完善当前任务，补充缺失的实现与测试，然后回答下一步计划。',
+        },
+        {
+            id: 'default_template_3',
+            name: '总结与计划',
+            content: '请总结当前进展，列出接下来要执行的步骤，并继续推进。',
+        },
     ],
     autoModeSelectedTemplateId: 'default_template_1',
     autoModeMaxCycles: 0, // 0 = unlimited
     autoModeSessionEnabled: {},
     autoModeCycleCount: {},
+    autoModeSessionMaxCycles: {},
+    autoModeCustomMessage: {},
 };
 Object.freeze(localSettingsDefaults);
 

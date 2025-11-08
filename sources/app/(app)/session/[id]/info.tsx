@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, Text, Animated } from 'react-native';
+import { View, Text, Animated, Pressable, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '@/constants/Typography';
@@ -21,7 +21,7 @@ import { Session } from '@/sync/storageTypes';
 import { useHappyAction } from '@/hooks/useHappyAction';
 import { HappyError } from '@/utils/errors';
 import { Switch } from '@/components/Switch';
-import { toggleAutoModeForSession, isAutoModeEnabledForSession, hasSessionAutoModeOverride, clearSessionAutoModeOverride } from '@/utils/autoModeUtils';
+import { toggleAutoModeForSession, clearSessionAutoModeOverride, setSelectedAutoModeTemplate, type AutoModeTemplate, setSessionAutoModeMaxCycles, clearSessionAutoModeMaxCycles, hasSessionCustomMessage, clearSessionCustomMessage, setSessionCustomMessage } from '@/utils/autoModeUtils';
 import { useLocalSetting } from '@/sync/storage';
 
 // Animated status dot component
@@ -63,6 +63,87 @@ function StatusDot({ color, isPulsing, size = 8 }: { color: string; isPulsing?: 
     );
 }
 
+function AutoModeTemplatePicker({
+    templates,
+    selectedId,
+    onSelect,
+    onClose,
+}: {
+    templates: AutoModeTemplate[];
+    selectedId: string | null;
+    onSelect: (templateId: string) => void;
+    onClose: () => void;
+}) {
+    const { theme } = useUnistyles();
+
+    return (
+        <View
+            style={{
+                padding: 20,
+                backgroundColor: theme.colors.surface,
+                borderRadius: 12,
+                minWidth: 320,
+                maxWidth: 420,
+            }}
+        >
+            <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 4, color: theme.colors.text }}>
+                {t('sessionInfo.autoModeTemplatePickerTitle')}
+            </Text>
+            <Text style={{ fontSize: 14, color: theme.colors.textSecondary, marginBottom: 12 }}>
+                {t('sessionInfo.autoModeTemplatePickerSubtitle')}
+            </Text>
+            {templates.length === 0 ? (
+                <View style={{ paddingVertical: 24 }}>
+                    <Text style={{ fontSize: 14, color: theme.colors.textSecondary }}>
+                        {t('sessionInfo.autoModeTemplateEmpty')}
+                    </Text>
+                </View>
+            ) : (
+                <ScrollView style={{ maxHeight: 320 }}>
+                    {templates.map((template) => {
+                        const isSelected = template.id === selectedId;
+                        return (
+                            <Pressable
+                                key={template.id}
+                                onPress={() => onSelect(template.id)}
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'flex-start',
+                                    paddingVertical: 12,
+                                    gap: 12,
+                                }}
+                            >
+                                <Ionicons
+                                    name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                                    size={22}
+                                    color={isSelected ? '#34C759' : theme.colors.textSecondary}
+                                    style={{ marginTop: 2 }}
+                                />
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ fontSize: 16, fontWeight: '600', color: theme.colors.text }}>
+                                        {template.name}
+                                    </Text>
+                                    <Text style={{ fontSize: 14, color: theme.colors.textSecondary, marginTop: 4 }}>
+                                        {template.content}
+                                    </Text>
+                                </View>
+                            </Pressable>
+                        );
+                    })}
+                </ScrollView>
+            )}
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16 }}>
+                <Pressable
+                    onPress={onClose}
+                    style={{ paddingVertical: 8, paddingHorizontal: 16 }}
+                >
+                    <Text style={{ color: '#007AFF', fontSize: 16 }}>{t('common.cancel')}</Text>
+                </Pressable>
+            </View>
+        </View>
+    );
+}
+
 function SessionInfoContent({ session }: { session: Session }) {
     const { theme } = useUnistyles();
     const router = useRouter();
@@ -70,15 +151,93 @@ function SessionInfoContent({ session }: { session: Session }) {
     const sessionName = getSessionName(session);
     const sessionStatus = useSessionStatus(session);
     
-    // Check if auto mode is enabled for this session (session-specific override or global setting)
-    const isSessionAutoModeEnabled = isAutoModeEnabledForSession(session.id);
-    const hasOverride = hasSessionAutoModeOverride(session.id);
+    // Get auto mode settings
     const globalAutoModeEnabled = useLocalSetting('autoModeEnabled');
+    const autoModeSessionEnabled = useLocalSetting('autoModeSessionEnabled');
+    const autoModeTemplates = useLocalSetting('autoModeTemplates');
+    const autoModeSelectedTemplateId = useLocalSetting('autoModeSelectedTemplateId');
+    const autoModeSessionMaxCycles = useLocalSetting('autoModeSessionMaxCycles');
+    const globalAutoModeMaxCycles = useLocalSetting('autoModeMaxCycles');
+    const autoModeCustomMessage = useLocalSetting('autoModeCustomMessage');
+    
+    // Check if auto mode is enabled for this session (session-specific override or global setting)
+    const hasOverride = session.id in autoModeSessionEnabled;
+    const isSessionAutoModeEnabled = hasOverride ? autoModeSessionEnabled[session.id] : false;
+    const selectedTemplate = autoModeTemplates.find((template) => template.id === autoModeSelectedTemplateId) || null;
+    const sessionMaxCycleOverride = autoModeSessionMaxCycles[session.id];
+    const sessionMaxSubtitle = sessionMaxCycleOverride !== undefined
+        ? (sessionMaxCycleOverride === 0
+            ? t('sessionInfo.autoModeSessionMaxUnlimited')
+            : t('sessionInfo.autoModeSessionMaxSet', { count: sessionMaxCycleOverride }))
+        : (globalAutoModeMaxCycles === 0
+            ? t('sessionInfo.autoModeSessionMaxGlobalUnlimited')
+            : t('sessionInfo.autoModeSessionMaxGlobal', { count: globalAutoModeMaxCycles }));
+    const sessionMaxDetail = sessionMaxCycleOverride !== undefined
+        ? (sessionMaxCycleOverride === 0 ? '∞' : String(sessionMaxCycleOverride))
+        : undefined;
+    const customMessage = autoModeCustomMessage[session.id];
+    const hasCustomMessage = hasSessionCustomMessage(session.id);
     
     // Handler to toggle auto mode for this session
     const handleToggleAutoMode = useCallback(() => {
         toggleAutoModeForSession(session.id, !isSessionAutoModeEnabled);
     }, [session.id, isSessionAutoModeEnabled]);
+
+    const handleSelectAutoModeTemplate = useCallback(() => {
+        let modalId = '';
+
+        const closeModal = () => {
+            if (modalId) {
+                Modal.hide(modalId);
+            }
+        };
+
+        modalId = Modal.show({
+            component: AutoModeTemplatePicker,
+            props: {
+                templates: autoModeTemplates,
+                selectedId: autoModeSelectedTemplateId,
+                onSelect: (templateId: string) => {
+                    setSelectedAutoModeTemplate(templateId);
+                    closeModal();
+                },
+                onClose: closeModal,
+            },
+        });
+    }, [autoModeSelectedTemplateId, autoModeTemplates]);
+
+    const handleSetSessionMaxCycles = useCallback(async () => {
+        const currentValue = sessionMaxCycleOverride !== undefined ? String(sessionMaxCycleOverride) : '';
+        const result = await Modal.prompt(
+            t('sessionInfo.autoModeSessionMaxPromptTitle'),
+            t('sessionInfo.autoModeSessionMaxPromptMessage'),
+            {
+                cancelText: t('common.cancel'),
+                confirmText: t('common.save'),
+                defaultValue: currentValue,
+                placeholder: t('sessionInfo.autoModeSessionMaxPromptPlaceholder'),
+                inputType: 'numeric',
+            }
+        );
+
+        if (result === null) {
+            return;
+        }
+
+        const trimmed = result.trim();
+        if (trimmed === '') {
+            clearSessionAutoModeMaxCycles(session.id);
+            return;
+        }
+
+        const numericValue = Number(trimmed);
+        if (!Number.isFinite(numericValue) || !Number.isInteger(numericValue) || numericValue < 0) {
+            Modal.alert(t('common.error'), t('sessionInfo.autoModeSessionMaxInvalid'));
+            return;
+        }
+
+        setSessionAutoModeMaxCycles(session.id, numericValue);
+    }, [session.id, sessionMaxCycleOverride]);
     
     // Handler to clear session override and use global setting
     const handleClearOverride = useCallback(async () => {
@@ -92,6 +251,47 @@ function SessionInfoContent({ session }: { session: Session }) {
         );
         if (confirmed) {
             clearSessionAutoModeOverride(session.id);
+        }
+    }, [session.id]);
+    
+    // Handler to set custom message
+    const handleSetCustomMessage = useCallback(async () => {
+        const result = await Modal.prompt(
+            t('sessionInfo.customAutoModeMessageTitle'),
+            t('sessionInfo.customAutoModeMessagePrompt'),
+            {
+                cancelText: t('common.cancel'),
+                confirmText: t('common.save'),
+                defaultValue: customMessage || '',
+                placeholder: t('sessionInfo.customAutoModeMessagePlaceholder'),
+            }
+        );
+        
+        if (result === null) {
+            return;
+        }
+        
+        const trimmed = result.trim();
+        if (trimmed === '') {
+            clearSessionCustomMessage(session.id);
+            return;
+        }
+        
+        setSessionCustomMessage(session.id, trimmed);
+    }, [session.id, customMessage]);
+    
+    // Handler to clear custom message
+    const handleClearCustomMessage = useCallback(async () => {
+        const confirmed = await Modal.confirm(
+            t('sessionInfo.clearCustomMessage'),
+            t('sessionInfo.clearCustomMessageConfirm'),
+            {
+                cancelText: t('common.cancel'),
+                confirmText: t('common.confirm'),
+            }
+        );
+        if (confirmed) {
+            clearSessionCustomMessage(session.id);
         }
     }, [session.id]);
     
@@ -280,14 +480,14 @@ function SessionInfoContent({ session }: { session: Session }) {
                     title={t('sessionInfo.autoMode')}
                     footer={hasOverride 
                         ? t('sessionInfo.autoModeOverrideDescription', { globalState: globalAutoModeEnabled ? t('sessionInfo.autoModeEnabled') : t('sessionInfo.autoModeDisabled') })
-                        : t('sessionInfo.autoModeDescription')
+                        : t('sessionInfo.autoModeDescriptionDefault', { globalState: globalAutoModeEnabled ? t('sessionInfo.autoModeEnabled') : t('sessionInfo.autoModeDisabled') })
                     }
                 >
                     <Item
                         title={t('sessionInfo.autoMode')}
                         subtitle={hasOverride 
                             ? (isSessionAutoModeEnabled ? t('sessionInfo.autoModeEnabledOverride') : t('sessionInfo.autoModeDisabledOverride'))
-                            : (isSessionAutoModeEnabled ? t('sessionInfo.autoModeEnabled') : t('sessionInfo.autoModeDisabled'))
+                            : (isSessionAutoModeEnabled ? t('sessionInfo.autoModeEnabled') : t('sessionInfo.autoModeDisabledDefault'))
                         }
                         icon={<Ionicons name="play-circle-outline" size={29} color="#34C759" />}
                         rightElement={
@@ -297,6 +497,49 @@ function SessionInfoContent({ session }: { session: Session }) {
                             />
                         }
                         showChevron={false}
+                    />
+                    <Item
+                        title={t('sessionInfo.customAutoModeMessage')}
+                        subtitle={
+                            hasCustomMessage
+                                ? (customMessage && customMessage.length > 80
+                                    ? `${customMessage.slice(0, 80)}...`
+                                    : customMessage)
+                                : t('sessionInfo.customAutoModeMessageEmpty')
+                        }
+                        detail={hasCustomMessage ? '✓' : undefined}
+                        icon={<Ionicons name="text-outline" size={29} color="#34C759" />}
+                        onPress={handleSetCustomMessage}
+                    />
+                    {hasCustomMessage && (
+                        <Item
+                            title={t('sessionInfo.clearCustomMessage')}
+                            subtitle={t('sessionInfo.clearCustomMessageSubtitle')}
+                            icon={<Ionicons name="close-circle-outline" size={29} color="#FF3B30" />}
+                            onPress={handleClearCustomMessage}
+                        />
+                    )}
+                    {!hasCustomMessage && (
+                        <Item
+                            title={t('sessionInfo.autoModeTemplateLabel')}
+                            subtitle={
+                                selectedTemplate
+                                    ? (selectedTemplate.content.length > 80
+                                        ? `${selectedTemplate.content.slice(0, 80)}...`
+                                        : selectedTemplate.content)
+                                    : t('sessionInfo.autoModeTemplateEmpty')
+                            }
+                            detail={selectedTemplate ? selectedTemplate.name : undefined}
+                            icon={<Ionicons name="document-text-outline" size={29} color="#007AFF" />}
+                            onPress={handleSelectAutoModeTemplate}
+                        />
+                    )}
+                    <Item
+                        title={t('sessionInfo.autoModeSessionMaxLabel')}
+                        subtitle={sessionMaxSubtitle}
+                        detail={sessionMaxDetail}
+                        icon={<Ionicons name="repeat-outline" size={29} color="#5856D6" />}
+                        onPress={handleSetSessionMaxCycles}
                     />
                     {hasOverride && (
                         <Item

@@ -158,6 +158,8 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
     const realtimeStatus = useRealtimeStatus();
     const { messages, isLoaded } = useSessionMessages(sessionId);
     const acknowledgedCliVersions = useLocalSetting('acknowledgedCliVersions');
+    const autoModeTemplates = useLocalSetting('autoModeTemplates');
+    const autoModeSelectedTemplateId = useLocalSetting('autoModeSelectedTemplateId');
 
     // Check if CLI version is outdated and not already acknowledged
     const cliVersion = session.metadata?.version;
@@ -308,6 +310,8 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
             onModelModeChange={updateModelMode}
             autoModeEnabled={autoModeEnabled}
             onAutoModeChange={updateAutoMode}
+            autoModeTemplates={autoModeTemplates}
+            autoModeSelectedTemplateId={autoModeSelectedTemplateId}
             metadata={session.metadata}
             connectionStatus={{
                 text: sessionStatus.statusText,

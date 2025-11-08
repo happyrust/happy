@@ -1,6 +1,6 @@
 import { Ionicons, Octicons } from '@expo/vector-icons';
 import * as React from 'react';
-import { View, Platform, useWindowDimensions, ViewStyle, Text, ActivityIndicator, TouchableWithoutFeedback, Image as RNImage } from 'react-native';
+import { View, Platform, useWindowDimensions, ViewStyle, Text, ActivityIndicator, Image as RNImage } from 'react-native';
 import { Image } from 'expo-image';
 import { Pressable } from 'react-native-gesture-handler';
 import { layout } from './layout';
@@ -23,6 +23,8 @@ import { Theme } from '@/theme';
 import { t } from '@/text';
 import { Metadata } from '@/sync/storageTypes';
 import { Switch } from './Switch';
+import { AutoModeTemplate, setSessionCustomMessage, addAutoModeTemplate } from '@/utils/autoModeUtils';
+import { Modal } from '@/modal';
 
 interface AgentInputProps {
     value: string;
@@ -68,6 +70,8 @@ interface AgentInputProps {
     minHeight?: number;
     autoModeEnabled?: boolean;
     onAutoModeChange?: (enabled: boolean) => void;
+    autoModeTemplates?: AutoModeTemplate[];
+    autoModeSelectedTemplateId?: string | null;
 }
 
 const MAX_CONTEXT_SIZE = 190000;
@@ -308,6 +312,41 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
     const shakerRef = React.useRef<ShakeInstance>(null);
     const inputRef = React.useRef<MultiTextInputHandle>(null);
 
+    // Template picker state
+    const [showTemplatePicker, setShowTemplatePicker] = React.useState(false);
+    
+    // Handler to save current message as template
+    const handleSaveAsTemplate = React.useCallback(async () => {
+        if (!hasText) return;
+        
+        const templateName = await Modal.prompt(
+            t('agentInput.saveAsTemplate'),
+            t('agentInput.enterTemplateName'),
+            {
+                placeholder: t('agentInput.templateNamePlaceholder'),
+                confirmText: t('common.save'),
+                cancelText: t('common.cancel'),
+            }
+        );
+        
+        if (templateName && templateName.trim()) {
+            addAutoModeTemplate({
+                name: templateName.trim(),
+                content: props.value.trim(),
+            });
+            hapticsLight();
+        }
+    }, [hasText, props.value]);
+    
+    // Handler to set current message as auto-send message
+    const handleSetAsAutoSend = React.useCallback(() => {
+        if (!hasText || !props.sessionId) return;
+        
+        setSessionCustomMessage(props.sessionId, props.value.trim());
+        setShowTemplatePicker(false);
+        hapticsLight();
+    }, [hasText, props.value, props.sessionId]);
+
     // Forward ref to the MultiTextInput
     React.useImperativeHandle(ref, () => inputRef.current!, []);
 
@@ -522,12 +561,161 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                     </View>
                 )}
 
+                {/* Template picker overlay */}
+                {showTemplatePicker && (
+                    <>
+                        <Pressable
+                            onPress={() => setShowTemplatePicker(false)}
+                            style={styles.overlayBackdrop}
+                        />
+                        <View style={[
+                            styles.autocompleteOverlay,
+                            { paddingHorizontal: screenWidth > 700 ? 0 : 8 }
+                        ]}>
+                            <FloatingOverlay maxHeight={400} keyboardShouldPersistTaps="handled">
+                                {/* Actions for current message */}
+                                {hasText && props.sessionId && (
+                                    <>
+                                        <View style={styles.overlaySection}>
+                                            <Text style={styles.overlaySectionTitle}>
+                                                {t('agentInput.currentMessage')}
+                                            </Text>
+                                            <Pressable
+                                                onPress={handleSetAsAutoSend}
+                                                style={({ pressed }) => ({
+                                                    paddingHorizontal: 16,
+                                                    paddingVertical: 12,
+                                                    backgroundColor: pressed
+                                                        ? theme.colors.surfacePressed
+                                                        : 'transparent',
+                                                })}
+                                            >
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                                    <Ionicons
+                                                        name="arrow-redo-circle-outline"
+                                                        size={24}
+                                                        color="#007AFF"
+                                                    />
+                                                    <View style={{ flex: 1 }}>
+                                                        <Text style={{
+                                                            fontSize: 15,
+                                                            fontWeight: '600',
+                                                            color: theme.colors.text,
+                                                            marginBottom: 2,
+                                                            ...Typography.default('semiBold')
+                                                        }}>
+                                                            {t('agentInput.setAsAutoSend')}
+                                                        </Text>
+                                                        <Text style={{
+                                                            fontSize: 13,
+                                                            color: theme.colors.textSecondary,
+                                                            ...Typography.default()
+                                                        }} numberOfLines={1}>
+                                                            {props.value.length > 50 
+                                                                ? props.value.substring(0, 50) + '...' 
+                                                                : props.value}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                            </Pressable>
+                                            <Pressable
+                                                onPress={handleSaveAsTemplate}
+                                                style={({ pressed }) => ({
+                                                    paddingHorizontal: 16,
+                                                    paddingVertical: 12,
+                                                    backgroundColor: pressed
+                                                        ? theme.colors.surfacePressed
+                                                        : 'transparent',
+                                                })}
+                                            >
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                                    <Ionicons
+                                                        name="add-circle-outline"
+                                                        size={24}
+                                                        color="#34C759"
+                                                    />
+                                                    <Text style={{
+                                                        fontSize: 15,
+                                                        fontWeight: '600',
+                                                        color: theme.colors.text,
+                                                        ...Typography.default('semiBold')
+                                                    }}>
+                                                        {t('agentInput.saveAsTemplate')}
+                                                    </Text>
+                                                </View>
+                                            </Pressable>
+                                        </View>
+                                        <View style={styles.overlayDivider} />
+                                    </>
+                                )}
+                                
+                                {/* Template list */}
+                                {props.autoModeTemplates && props.autoModeTemplates.length > 0 && (
+                                    <View style={styles.overlaySection}>
+                                        <Text style={styles.overlaySectionTitle}>
+                                            {t('agentInput.templates')}
+                                        </Text>
+                                        {props.autoModeTemplates.map((template) => (
+                                            <Pressable
+                                                key={template.id}
+                                                onPress={() => {
+                                                    hapticsLight();
+                                                    props.onChangeText(template.content);
+                                                    setShowTemplatePicker(false);
+                                                }}
+                                                style={({ pressed }) => ({
+                                                    paddingHorizontal: 16,
+                                                    paddingVertical: 12,
+                                                    backgroundColor: pressed
+                                                        ? theme.colors.surfacePressed
+                                                        : 'transparent',
+                                                })}
+                                            >
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                                    <View style={{ flex: 1 }}>
+                                                        <Text style={{
+                                                            fontSize: 15,
+                                                            fontWeight: '600',
+                                                            color: theme.colors.text,
+                                                            marginBottom: 4,
+                                                            ...Typography.default('semiBold')
+                                                        }}>
+                                                            {template.name}
+                                                        </Text>
+                                                        <Text style={{
+                                                            fontSize: 13,
+                                                            color: theme.colors.textSecondary,
+                                                            ...Typography.default()
+                                                        }} numberOfLines={2}>
+                                                            {template.content.length > 80 
+                                                                ? template.content.substring(0, 80) + '...' 
+                                                                : template.content}
+                                                        </Text>
+                                                    </View>
+                                                    {props.autoModeSelectedTemplateId === template.id && (
+                                                        <Ionicons
+                                                            name="checkmark-circle"
+                                                            size={20}
+                                                            color="#34C759"
+                                                        />
+                                                    )}
+                                                </View>
+                                            </Pressable>
+                                        ))}
+                                    </View>
+                                )}
+                            </FloatingOverlay>
+                        </View>
+                    </>
+                )}
+
                 {/* Settings overlay */}
                 {showSettings && (
                     <>
-                        <TouchableWithoutFeedback onPress={() => setShowSettings(false)}>
-                            <View style={styles.overlayBackdrop} />
-                        </TouchableWithoutFeedback>
+                        <Pressable
+                            onPress={() => setShowSettings(false)}
+                            style={styles.overlayBackdrop}
+                        />
                         <View style={[
                             styles.settingsOverlay,
                             { paddingHorizontal: screenWidth > 700 ? 0 : 8 }
@@ -837,6 +1025,34 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                     {/* Action buttons below input */}
                     <View style={styles.actionButtonsContainer}>
                         <View style={styles.actionButtonsLeft}>
+
+                            {/* Template picker button */}
+                            {props.autoModeEnabled && (
+                                <Pressable
+                                    onPress={() => {
+                                        hapticsLight();
+                                        setShowTemplatePicker(!showTemplatePicker);
+                                    }}
+                                    hitSlop={{ top: 5, bottom: 10, left: 0, right: 0 }}
+                                    style={(p) => ({
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        borderRadius: Platform.select({ default: 16, android: 20 }),
+                                        paddingHorizontal: 8,
+                                        paddingVertical: 6,
+                                        justifyContent: 'center',
+                                        height: 32,
+                                        opacity: p.pressed ? 0.7 : 1,
+                                        backgroundColor: showTemplatePicker ? theme.colors.surfaceSelected : 'transparent',
+                                    })}
+                                >
+                                    <Ionicons
+                                        name={'chevron-up'}
+                                        size={16}
+                                        color={theme.colors.button.secondary.tint}
+                                    />
+                                </Pressable>
+                            )}
 
                             {/* Settings button */}
                             {props.onPermissionModeChange && (
