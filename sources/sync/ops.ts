@@ -490,7 +490,7 @@ export async function sessionDelete(sessionId: string): Promise<{ success: boole
         const response = await apiSocket.request(`/v1/sessions/${sessionId}`, {
             method: 'DELETE'
         });
-        
+
         if (response.ok) {
             const result = await response.json();
             return { success: true };
@@ -501,6 +501,73 @@ export async function sessionDelete(sessionId: string): Promise<{ success: boole
                 message: error || 'Failed to delete session'
             };
         }
+    } catch (error) {
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+/**
+ * Restart a closed session remotely
+ * This will spawn a new Happy CLI process in the same directory with the same session ID
+ * Requires the daemon to be running on the machine
+ */
+export async function sessionRestart(sessionId: string): Promise<{ success: boolean; message: string }> {
+    try {
+        await getSync();
+        const { storage } = await import('./storage');
+        const session = storage.getState().sessions[sessionId];
+
+        if (!session) {
+            return {
+                success: false,
+                message: 'Session not found'
+            };
+        }
+
+        if (session.active || session.presence === 'online') {
+            return {
+                success: false,
+                message: 'Session is already active'
+            };
+        }
+
+        const machineId = session.metadata?.machineId;
+        const path = session.metadata?.path;
+
+        if (!machineId || !path) {
+            return {
+                success: false,
+                message: 'Missing machine or path information'
+            };
+        }
+
+        // Check if machine is online
+        const machine = storage.getState().machines[machineId];
+        if (!machine || !machine.active) {
+            return {
+                success: false,
+                message: 'Machine is offline. Please start the daemon on your computer first.'
+            };
+        }
+
+        // Request restart via Machine RPC
+        const result = await apiSocket.machineRPC<
+            { success: boolean; message: string },
+            { sessionId: string; path: string; flavor?: string }
+        >(
+            machineId,
+            'restart-session',
+            {
+                sessionId,
+                path,
+                flavor: session.metadata?.flavor || undefined
+            }
+        );
+
+        return result;
     } catch (error) {
         return {
             success: false,

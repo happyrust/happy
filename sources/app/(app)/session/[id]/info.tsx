@@ -11,7 +11,7 @@ import { useSession, useIsDataReady } from '@/sync/storage';
 import { getSessionName, useSessionStatus, formatOSPlatform, formatPathRelativeToHome, getSessionAvatarId } from '@/utils/sessionUtils';
 import * as Clipboard from 'expo-clipboard';
 import { Modal } from '@/modal';
-import { sessionKill, sessionDelete } from '@/sync/ops';
+import { sessionKill, sessionDelete, sessionRestart } from '@/sync/ops';
 import { useUnistyles } from 'react-native-unistyles';
 import { layout } from '@/components/layout';
 import { t } from '@/text';
@@ -382,32 +382,35 @@ function SessionInfoContent({ session }: { session: Session }) {
         }
     }, []);
 
-    const handleRestartSession = useCallback(async () => {
-        if (!session?.metadata?.path) return;
+    // Use HappyAction for session restart - it handles errors automatically
+    const [restartingSession, performRestart] = useHappyAction(async () => {
+        if (!session?.id) {
+            throw new HappyError('Session ID not found', false);
+        }
 
-        const path = session.metadata.path;
-        const instructions = t('sessionInfo.restartSessionSteps', { path });
-        const cdCommand = `cd ${path}`;
+        const result = await sessionRestart(session.id);
 
+        if (!result.success) {
+            throw new HappyError(result.message || t('sessionInfo.restartSessionFailed'), false);
+        }
+
+        // Success - show confirmation message
+        Modal.alert(t('common.success'), t('sessionInfo.restartSessionSuccess'));
+    });
+
+    const handleRestartSession = useCallback(() => {
         Modal.alert(
-            t('sessionInfo.restartSessionInstructions'),
-            instructions,
+            t('sessionInfo.restartSession'),
+            t('sessionInfo.restartSessionSubtitle'),
             [
                 { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: t('sessionInfo.restartSessionCopyCommand'),
-                    onPress: async () => {
-                        try {
-                            await Clipboard.setStringAsync(cdCommand);
-                            Modal.alert(t('common.success'), t('sessionInfo.restartSessionCommandCopied'));
-                        } catch (error) {
-                            Modal.alert(t('common.error'), t('common.error'));
-                        }
-                    }
+                    text: t('sessionInfo.restartSession'),
+                    onPress: performRestart
                 }
             ]
         );
-    }, [session]);
+    }, [performRestart]);
 
     return (
         <>
@@ -591,9 +594,10 @@ function SessionInfoContent({ session }: { session: Session }) {
                     {!sessionStatus.isConnected && !session.active && session.metadata?.path && (
                         <Item
                             title={t('sessionInfo.restartSession')}
-                            subtitle={t('sessionInfo.restartSessionSubtitle')}
+                            subtitle={restartingSession ? t('sessionInfo.restartingSession') : t('sessionInfo.restartSessionSubtitle')}
                             icon={<Ionicons name="play-outline" size={29} color="#34C759" />}
                             onPress={handleRestartSession}
+                            disabled={restartingSession}
                         />
                     )}
                     {sessionStatus.isConnected && (
