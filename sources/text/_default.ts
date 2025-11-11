@@ -456,7 +456,13 @@ export const en = {
         clearCustomMessage: 'Clear Custom Message',
         clearCustomMessageConfirm: 'This will remove the custom message and use the selected template instead.',
         clearCustomMessageSubtitle: 'Use template instead',
-        
+        restartSession: 'Restart Session',
+        restartSessionSubtitle: 'Run the happy command in your terminal to restart this session',
+        restartSessionInstructions: 'Restart Session Instructions',
+        restartSessionCopyCommand: 'Copy Command',
+        restartSessionCommandCopied: 'Command copied to clipboard',
+        restartSessionSteps: ({ path }: { path: string }) =>
+            `To restart this session:\n\n1. Open your terminal\n2. Navigate to the project directory:\n   cd ${path}\n3. Run the happy command:\n   happy\n4. The session will reconnect automatically`,
     },
 
     components: {

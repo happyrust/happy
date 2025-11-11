@@ -467,6 +467,13 @@ export const pl: TranslationStructure = {
         autoModeTemplateEmpty: 'Brak dostępnych szablonów. Dodaj je w Ustawienia > Tryb automatyczny.',
         autoModeTemplatePickerTitle: 'Wybierz szablon trybu automatycznego',
         autoModeTemplatePickerSubtitle: 'Wybierz szablon, który będzie wysyłany automatycznie, gdy zadziała tryb automatyczny.',
+        restartSession: 'Uruchom ponownie sesję',
+        restartSessionSubtitle: 'Uruchom polecenie happy w terminalu, aby ponownie uruchomić tę sesję',
+        restartSessionInstructions: 'Instrukcje ponownego uruchomienia sesji',
+        restartSessionCopyCommand: 'Kopiuj polecenie',
+        restartSessionCommandCopied: 'Polecenie skopiowane do schowka',
+        restartSessionSteps: ({ path }: { path: string }) =>
+            `Aby ponownie uruchomić tę sesję:\n\n1. Otwórz terminal\n2. Przejdź do katalogu projektu:\n   cd ${path}\n3. Uruchom polecenie happy:\n   happy\n4. Sesja połączy się ponownie automatycznie`,
     },
 
     components: {

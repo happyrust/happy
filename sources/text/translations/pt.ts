@@ -456,7 +456,13 @@ export const pt: TranslationStructure = {
         autoModeTemplateEmpty: 'Nenhum modelo disponível. Adicione modelos em Configurações > Modo automático.',
         autoModeTemplatePickerTitle: 'Escolher modelo do modo automático',
         autoModeTemplatePickerSubtitle: 'Selecione o modelo que será enviado automaticamente quando o modo automático for executado.',
-        
+        restartSession: 'Reiniciar sessão',
+        restartSessionSubtitle: 'Execute o comando happy no seu terminal para reiniciar esta sessão',
+        restartSessionInstructions: 'Instruções para reiniciar a sessão',
+        restartSessionCopyCommand: 'Copiar comando',
+        restartSessionCommandCopied: 'Comando copiado para a área de transferência',
+        restartSessionSteps: ({ path }: { path: string }) =>
+            `Para reiniciar esta sessão:\n\n1. Abra seu terminal\n2. Navegue até o diretório do projeto:\n   cd ${path}\n3. Execute o comando happy:\n   happy\n4. A sessão se reconectará automaticamente`,
     },
 
     components: {

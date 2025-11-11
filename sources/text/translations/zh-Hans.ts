@@ -458,7 +458,13 @@ export const zhHans: TranslationStructure = {
         clearCustomMessage: '清除自定义消息',
         clearCustomMessageConfirm: '这将删除自定义消息，转而使用已选模板。',
         clearCustomMessageSubtitle: '改用模板',
-        
+        restartSession: '重启会话',
+        restartSessionSubtitle: '在终端中运行 happy 命令以重启此会话',
+        restartSessionInstructions: '重启会话说明',
+        restartSessionCopyCommand: '复制命令',
+        restartSessionCommandCopied: '命令已复制到剪贴板',
+        restartSessionSteps: ({ path }: { path: string }) =>
+            `重启此会话的步骤：\n\n1. 打开终端\n2. 切换到项目目录：\n   cd ${path}\n3. 运行 happy 命令：\n   happy\n4. 会话将自动重新连接`,
     },
 
     components: {

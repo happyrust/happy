@@ -431,6 +431,13 @@ export const ru: TranslationStructure = {
         autoModeTemplateEmpty: 'Нет доступных шаблонов. Добавьте их в Настройки > Автоматический режим.',
         autoModeTemplatePickerTitle: 'Выбор шаблона автоматического режима',
         autoModeTemplatePickerSubtitle: 'Выберите шаблон, который будет отправляться автоматически при работе автоматического режима.',
+        restartSession: 'Перезапустить сессию',
+        restartSessionSubtitle: 'Выполните команду happy в терминале для перезапуска этой сессии',
+        restartSessionInstructions: 'Инструкции по перезапуску сессии',
+        restartSessionCopyCommand: 'Скопировать команду',
+        restartSessionCommandCopied: 'Команда скопирована в буфер обмена',
+        restartSessionSteps: ({ path }: { path: string }) =>
+            `Для перезапуска этой сессии:\n\n1. Откройте терминал\n2. Перейдите в директорию проекта:\n   cd ${path}\n3. Выполните команду happy:\n   happy\n4. Сессия переподключится автоматически`,
     },
 
     components: {

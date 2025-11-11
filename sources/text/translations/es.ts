@@ -456,7 +456,13 @@ export const es: TranslationStructure = {
         clearCustomMessage: 'Borrar mensaje personalizado',
         clearCustomMessageConfirm: 'Esto eliminará el mensaje personalizado y usará la plantilla seleccionada.',
         clearCustomMessageSubtitle: 'Usar plantilla en su lugar',
-        
+        restartSession: 'Reiniciar sesión',
+        restartSessionSubtitle: 'Ejecuta el comando happy en tu terminal para reiniciar esta sesión',
+        restartSessionInstructions: 'Instrucciones para reiniciar la sesión',
+        restartSessionCopyCommand: 'Copiar comando',
+        restartSessionCommandCopied: 'Comando copiado al portapapeles',
+        restartSessionSteps: ({ path }: { path: string }) =>
+            `Para reiniciar esta sesión:\n\n1. Abre tu terminal\n2. Navega al directorio del proyecto:\n   cd ${path}\n3. Ejecuta el comando happy:\n   happy\n4. La sesión se reconectará automáticamente`,
     },
 
     components: {

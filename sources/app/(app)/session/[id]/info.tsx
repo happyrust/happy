@@ -382,6 +382,33 @@ function SessionInfoContent({ session }: { session: Session }) {
         }
     }, []);
 
+    const handleRestartSession = useCallback(async () => {
+        if (!session?.metadata?.path) return;
+
+        const path = session.metadata.path;
+        const instructions = t('sessionInfo.restartSessionSteps', { path });
+        const cdCommand = `cd ${path}`;
+
+        Modal.alert(
+            t('sessionInfo.restartSessionInstructions'),
+            instructions,
+            [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                    text: t('sessionInfo.restartSessionCopyCommand'),
+                    onPress: async () => {
+                        try {
+                            await Clipboard.setStringAsync(cdCommand);
+                            Modal.alert(t('common.success'), t('sessionInfo.restartSessionCommandCopied'));
+                        } catch (error) {
+                            Modal.alert(t('common.error'), t('common.error'));
+                        }
+                    }
+                }
+            ]
+        );
+    }, [session]);
+
     return (
         <>
             <ItemList>
@@ -559,6 +586,14 @@ function SessionInfoContent({ session }: { session: Session }) {
                             subtitle={t('sessionInfo.viewMachineSubtitle')}
                             icon={<Ionicons name="server-outline" size={29} color="#007AFF" />}
                             onPress={() => router.push(`/machine/${session.metadata?.machineId}`)}
+                        />
+                    )}
+                    {!sessionStatus.isConnected && !session.active && session.metadata?.path && (
+                        <Item
+                            title={t('sessionInfo.restartSession')}
+                            subtitle={t('sessionInfo.restartSessionSubtitle')}
+                            icon={<Ionicons name="play-outline" size={29} color="#34C759" />}
+                            onPress={handleRestartSession}
                         />
                     )}
                     {sessionStatus.isConnected && (
